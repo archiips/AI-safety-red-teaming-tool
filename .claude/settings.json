@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__git__*",
+      "mcp__db__execute_sql",
+      "mcp__db__list_tables",
+      "mcp__db__describe_table",
+      "mcp__db__search_objects",
+      "mcp__ollama__list_models",
+      "mcp__ollama__generate",
+      "mcp__ollama__chat",
+      "mcp__docker__list_containers",
+      "mcp__docker__get_logs",
+      "mcp__redis__get",
+      "mcp__redis__keys",
+      "mcp__redis__hgetall",
+      "mcp__redis__lrange"
+    ],
+    "deny": [
+      "mcp__db__drop_table",
+      "mcp__db__truncate",
+      "mcp__redis__flushall",
+      "mcp__redis__flushdb"
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PROJECT='/Users/architjaiswal/main/PROJECTS/AI Safety red teaming app'; STATUS=$(git -C \"$PROJECT\" status --short 2>/dev/null); BRANCH=$(git -C \"$PROJECT\" branch --show-current 2>/dev/null); [ -n \"$STATUS\" ] && jq -n --arg s \"$STATUS\" --arg b \"$BRANCH\" '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":(\"Uncommitted changes on branch \\u2018\" + $b + \"\\u2019:\\n\" + $s + \"\\n\\nWorkflow: tell the user what to test. When they confirm tests pass, stage relevant files, commit with a descriptive message, and push to origin/\" + $b + \".\")}}' || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
