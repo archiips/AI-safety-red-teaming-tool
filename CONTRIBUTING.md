@@ -126,6 +126,44 @@ from crucible.adapters.pyrit_adapter import CrucibleRedTeamAdapter
    new `RiskCategory` member exists
 4. Rebuild and run: `pytest tests/unit/ tests/contracts/ -v`
 
+## Intentional Deviations from the Implementation Plan
+
+This section records decisions where the implementation diverged from the original plan, the
+alternatives that were researched, and why the chosen approach is better. Keep this section
+up to date whenever a future phase makes a similar call.
+
+---
+
+### Phase 6: HeatmapChart — Custom CSS Grid instead of Recharts
+
+**Plan said:** Build `HeatmapChart` using Recharts.
+
+**What we built:** A custom CSS grid component (`frontend/src/components/HeatmapChart.tsx`).
+
+**Why the plan was wrong:** Recharts has no native heatmap chart type. The only way to
+approximate one in Recharts is to misuse `ScatterChart` with custom shaped dots — a fragile
+hack that gives up color control, tooltip positioning, and click-to-drill-down semantics.
+
+**Alternatives researched (2026-05-09):**
+
+| Library | Unpacked size | Notes |
+|---|---|---|
+| `recharts` (planned) | 6.7 MB | No heatmap primitive. Scatter-plot workaround is brittle. |
+| `@nivo/heatmap` | 245 KB + 13 transitive deps (incl. `@react-spring/core`) | Has a real `HeatMap` component, but its theming system and built-in animation fight our 3-point navy→amber→red interpolation and the diff-delta overlay. |
+| `@visx/heatmap` | 29 KB + 4 deps | Provides `HeatmapRect` / `HeatmapCircle` primitives with D3-scale integration — the closest real alternative. Would still require adding `@visx/scale` or `d3-scale` for color interpolation and produces the same output with more code. |
+| **Custom CSS grid** ✅ | 0 extra deps | ~80 lines. Pixel-perfect 3-point color interpolation. Diff-delta overlay baked in. Works now. |
+
+**Decision:** Keep the custom CSS grid. `recharts` remains installed because Phase 9 (report
+export) will likely need bar/line charts (ASR over time, score distributions). If the heatmap
+ever needs to scale to a dynamic number of rows or requires D3 force-layout, revisit
+`@visx/heatmap` at that point.
+
+**Where to find the implementation:** `frontend/src/components/HeatmapChart.tsx` — the
+`asrToColor()` function handles the 3-stop interpolation; `HeatmapChart` component renders the
+CSS grid with gap-4 cells; diff-delta badges appear when `compareData` prop is supplied.
+
+---
+
 ## How to Add New Attack Strategies
 
 1. Add the strategy string → `AttackStrategy` mapping to `STRATEGY_MAP` in
