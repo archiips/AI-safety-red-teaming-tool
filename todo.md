@@ -404,46 +404,49 @@
 
 ## PHASE 5 — Backend API & Queue (Weeks 4–8)
 
-- [ ] **Task 5.1 — FastAPI Application Setup**
-  - [ ] Create `crucible/api/main.py` with FastAPI app
-  - [ ] Create `crucible/api/routes/runs.py`:
-    - [ ] `POST /runs` — validate config, create DB row, enqueue Celery job, return `run_id`
-    - [ ] `GET /runs/{id}` — return status, progress %, current ASR
-    - [ ] `GET /runs/{id}/report` — return JSON report
-    - [ ] `GET /runs/{id}/manifest` — return reproducibility manifest YAML
-  - [ ] Create `crucible/api/routes/policies.py`:
-    - [ ] `POST /policies/reload` — hot-reload C++ engine rules from DB
-  - [ ] Create `crucible/api/websocket.py`:
-    - [ ] `WS /runs/{id}/stream` — stream per-attack results via WebSocket
-  - [ ] Add JWT auth middleware (single shared secret for now)
-  - [ ] Write API unit tests using `TestClient`:
-    - [ ] `test_post_runs_returns_run_id()`
-    - [ ] `test_get_run_returns_status_field()`
-    - [ ] `test_unauthorized_request_returns_401()`
-    - [ ] `test_unknown_run_id_returns_404()`
-    - [ ] `test_policies_reload_returns_200()`
+- [x] **Task 5.1 — FastAPI Application Setup**
+  ✅ **Completed:** 2026-05-09
+  - [x] Create `crucible/api/main.py` with FastAPI app
+  - [x] Create `crucible/api/routes/runs.py`:
+    - [x] `POST /runs` — validate config, create DB row, enqueue Celery job, return `run_id`
+    - [x] `GET /runs/{id}` — return status, progress %, current ASR
+    - [x] `GET /runs/{id}/report` — return JSON report
+    - [x] `GET /runs/{id}/manifest` — return reproducibility manifest YAML
+  - [x] Create `crucible/api/routes/policies.py`:
+    - [x] `POST /policies/reload` — hot-reload C++ engine rules from DB
+  - [x] Create `crucible/api/websocket.py`:
+    - [x] `WS /runs/{id}/stream` — stream per-attack results via WebSocket
+  - [x] Add JWT auth middleware (single shared secret for now)
+  - [x] Write API unit tests using `TestClient`:
+    - [x] `test_post_runs_returns_run_id()`
+    - [x] `test_get_run_returns_status_field()`
+    - [x] `test_unauthorized_request_returns_401()`
+    - [x] `test_unknown_run_id_returns_404()`
+    - [x] `test_policies_reload_returns_200()` — mocks working engine, asserts 200 + `{"status":"ok"}`
+    - [x] `test_policies_reload_returns_500_without_cpp_module()` — error path
 
-- [ ] **Task 5.2 — Celery + Redis Task Queue**
-  - [ ] Create `docker-compose.yml` with Redis service:
+- [x] **Task 5.2 — Celery + Redis Task Queue**
+  ✅ **Completed:** 2026-05-09
+  - [x] Create `docker-compose.yml` with Redis service:
     ```yaml
     services:
       redis:
         image: redis:7-alpine
         ports: ["6379:6379"]
     ```
-  - [ ] Create `crucible/tasks/scan_task.py`:
-    - [ ] `run_scan_task(run_id: str)` — main Celery task
-    - [ ] Fan-out: generate attacks → score each → write to DB → update run status
-    - [ ] WebSocket broadcast on each completed attack
-    - [ ] Handle partial failure: mark individual attacks as failed, continue the run
-  - [ ] Create `crucible/worker.py` — Celery app config:
-    - [ ] Import C++ module at module level (Pitfall #8)
-    - [ ] Set `worker_prefetch_multiplier=1`
-    - [ ] Set `task_acks_late=True`
-  - [ ] Write Celery tests:
-    - [ ] `test_celery_worker_can_import_cpp_module()` (from PRD Pitfall #8)
-    - [ ] `test_scan_task_writes_scores_to_db()`
-    - [ ] `test_scan_task_handles_scorer_failure_gracefully()`
+  - [x] Create `crucible/tasks/scan_task.py`:
+    - [x] `run_scan_task(run_id: str)` — main Celery task
+    - [x] Fan-out: generate attacks → score each → write to DB → update run status
+    - [x] WebSocket broadcast on each completed attack via Redis pub/sub (`run:{id}:stream`)
+    - [x] Handle partial failure: mark individual attacks as failed, continue the run
+  - [x] Create `crucible/worker.py` — Celery app config:
+    - [x] Import C++ module at module level (Pitfall #8)
+    - [x] Set `worker_prefetch_multiplier=1`
+    - [x] Set `task_acks_late=True`
+  - [x] Write Celery tests:
+    - [x] `test_celery_worker_can_import_cpp_module()` (from PRD Pitfall #8)
+    - [x] `test_scan_task_writes_scores_to_db()`
+    - [x] `test_scan_task_handles_scorer_failure_gracefully()`
 
 ---
 
