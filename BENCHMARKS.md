@@ -41,7 +41,10 @@ Without it, individual `score()` calls at 64 workers pay ~10–15µs of Python `
 
 ## Score Fusion Cohen's κ
 
-_Populated in Task 4.3_
+Calibration weights fitted via isotonic regression on 530 HarmBench records (2026-05-09).
+Starting weights (CLAUDE.md defaults): cpp=0.20, azure_cs=0.50, llm_judge=0.30.
+
+Per-run κ values are stored in the `score_fusions` table (columns `kappa_cpp_azure`, `kappa_cpp_judge`, `kappa_azure_judge`) and will be populated once real scorer outputs are available from Phase 5+ pipeline runs.
 
 ## ASR Tables per Model
 
