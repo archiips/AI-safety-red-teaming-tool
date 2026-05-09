@@ -1,8 +1,11 @@
 # PINNED Azure SDK versions — DO NOT upgrade without running: pytest tests/contracts/ -v
 # Contract tests last verified: 2026-05-08
 # To upgrade: branch, update version, run contracts, merge only if green
+# Full upgrade protocol: see CONTRIBUTING.md
 #
 # azure-ai-evaluation==1.16.7 pinned after contract verification on 2026-05-08
+#   NOTE: [redteam] extras required — pulls in pyrit + transformers/datasets (~500MB install)
+#   Previous pin was 0.3.3; upgraded to 1.16.7 on 2026-05-08 (major version, API shape changed)
 # azure-ai-inference==1.0.0b9 pinned after contract verification on 2026-05-08
 # azure-ai-contentsafety==1.0.0 pinned after contract verification on 2026-05-08
 

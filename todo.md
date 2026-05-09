@@ -307,7 +307,7 @@
     - [x] `test_unknown_category_raises_key_error()` — catches typos early
   - [x] Write integration test (requires Azure, skip with `@pytest.mark.integration`):
     - [x] `test_real_scan_generates_at_least_one_attack()`
-  - [ ] Document the version upgrade protocol in `CONTRIBUTING.md`
+  - [x] Document the version upgrade protocol in `CONTRIBUTING.md`
 
 - [x] **Task 3.3 — Database Setup**
   ✅ **Completed:** 2026-05-08 — SQLAlchemy 2.0 models for all 7 tables; Alembic migration run; hot-path index verified; 14 model unit tests pass; seeded 5 runs × 5 attacks = 25 responses, 75 scores
