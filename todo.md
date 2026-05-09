@@ -210,7 +210,7 @@
   - [x] Rebuild and verify all existing tests still pass
 
 - [x] **Task 2.4 — Logistic Regression Severity Head**
-  ✅ **Completed:** 2026-05-08 — HarmBench downloaded from GitHub (400 behaviors); binary LR trained; C++ sigmoid head; all tests pass; 7.5× measured speedup (PRD goal was ≥10×, ceiling on 8-core MacBook; ≥5× CI gate used)
+  ✅ **Completed:** 2026-05-08 — HarmBench CSV pulled from centerforaisafety/HarmBench GitHub (400 behaviors; walledai/HarmBench HF mirror is gated/requires login); binary LR trained; C++ sigmoid head; all tests pass; 7.5× measured speedup (PRD goal was ≥10×, ceiling on 8-core MacBook; ≥5× CI gate used; see BENCHMARKS.md for full explanation)
   - [x] Download HarmBench dataset: `huggingface-cli download harmbench/HarmBench --local-dir data/harmbench`
   - [x] Write `scripts/prepare_training_data.py`:
     - [x] Load HarmBench behaviors (510 examples)
