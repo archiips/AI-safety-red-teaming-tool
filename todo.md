@@ -258,28 +258,29 @@
 
 ## PHASE 3 — Azure Setup & PyRIT Adapter (Week 4)
 
-- [ ] **Task 3.1 — Azure Services Setup**
-  - [ ] Create Azure AI Foundry project in portal
-  - [ ] Deploy Phi-4-mini-instruct model to Foundry
-  - [ ] Note the inference endpoint URL and API key
-  - [ ] Create Azure Content Safety resource (use **F0 free tier** — not S0)
-  - [ ] Note the Content Safety endpoint and key
-  - [ ] Add all keys to `.env` (NOT `.env.example`, which has placeholders)
-  - [ ] Verify Phi-4-mini via curl:
+- [x] **Task 3.1 — Azure Services Setup**
+  ✅ **Completed:** 2026-05-09 — Foundry project crucible-dev (East US 2); Phi-4-mini-instruct deployed GlobalStandard; Content Safety F0 crucible-safety-cs (East US 2); both verified via scripts/verify_azure.sh; correct inference endpoint is base resource /models path (project-scoped path returned API version error)
+  - [x] Create Azure AI Foundry project in portal
+  - [x] Deploy Phi-4-mini-instruct model to Foundry
+  - [x] Note the inference endpoint URL and API key
+  - [x] Create Azure Content Safety resource (use **F0 free tier** — not S0)
+  - [x] Note the Content Safety endpoint and key
+  - [x] Add all keys to `.env` (NOT `.env.example`, which has placeholders)
+  - [x] Verify Phi-4-mini via curl:
     ```bash
     curl -X POST "$AZURE_INFERENCE_ENDPOINT/chat/completions" \
       -H "Authorization: Bearer $AZURE_INFERENCE_KEY" \
       -H "Content-Type: application/json" \
       -d '{"model":"Phi-4-mini-instruct","messages":[{"role":"user","content":"hello"}]}'
     ```
-  - [ ] Verify Content Safety via curl:
+  - [x] Verify Content Safety via curl:
     ```bash
     curl -X POST "$AZURE_CONTENT_SAFETY_ENDPOINT/contentsafety/text:analyze" \
       -H "Ocp-Apim-Subscription-Key: $AZURE_CONTENT_SAFETY_KEY" \
       -H "Content-Type: application/json" \
       -d '{"text": "I want to hurt someone"}'
     ```
-  - [ ] Confirm F0 tier is active (check resource SKU in portal — must say "F0")
+  - [x] Confirm F0 tier is active (check resource SKU in portal — must say "F0")
 
 - [x] **Task 3.2 — PyRIT Adapter (Pitfall #1 — CRITICAL)**
   ✅ **Completed:** 2026-05-08 — pinned azure-ai-evaluation==1.16.7 (was 0.3.3); 26 contract tests pass; adapter with CATEGORY_MAP, STRATEGY_MAP, _normalize_result; 17 unit tests pass (1 integration skipped, requires Azure)
