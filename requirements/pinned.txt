@@ -2,12 +2,12 @@
 # Contract tests last verified: 2026-05-08
 # To upgrade: branch, update version, run contracts, merge only if green
 #
-# azure-ai-evaluation pinned after contract verification on 2026-05-08
-# azure-ai-inference pinned after contract verification on 2026-05-08
-# azure-ai-contentsafety pinned after contract verification on 2026-05-08
+# azure-ai-evaluation==1.16.7 pinned after contract verification on 2026-05-08
+# azure-ai-inference==1.0.0b9 pinned after contract verification on 2026-05-08
+# azure-ai-contentsafety==1.0.0 pinned after contract verification on 2026-05-08
 
-azure-ai-evaluation==0.3.3
-azure-ai-inference==1.0.0b7
+azure-ai-evaluation[redteam]==1.16.7
+azure-ai-inference==1.0.0b9
 azure-ai-contentsafety==1.0.0
 azure-identity>=1.16.0,<2.0.0
 azure-core>=1.30.0,<2.0.0
