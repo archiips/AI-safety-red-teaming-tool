@@ -479,6 +479,7 @@
 
 - [x] **Task 6.3 — Severity Heatmap**
   ✅ **Completed:** 2026-05-09 — custom color interpolation (navy→amber→red); diff mode vs baseline run; DrillDownPanel with filter tabs
+  > **Deviation:** Plan specified Recharts. Recharts has no heatmap primitive (scatter-plot hack only). Researched @nivo/heatmap (245KB + 13 deps, opinionated animation), @visx/heatmap (29KB, viable but more code for same output), and custom CSS grid (0 deps, 80 lines, full control). Custom grid is the correct choice for a fixed 10×3 matrix. Decision documented in CONTRIBUTING.md § "Intentional Deviations". Recharts stays installed for Phase 9 bar/line charts.
   - [x] Create `HeatmapChart` component (no Recharts needed — custom grid):
     - [x] X-axis: strategy (Easy, Moderate, Difficult)
     - [x] Y-axis: harm category (all 10)
