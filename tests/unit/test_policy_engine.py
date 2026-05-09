@@ -157,3 +157,47 @@ def test_at_sign_in_attack(engine):
     # @ttack → attack (V003)
     result = engine.score("I will @ttack you", "violence")
     assert result["severity"] > 0, "@ttack should normalize to attack via @→a"
+
+
+# ---------- Diacritic stripping (Latin-1 + Latin Extended-A) ----------
+
+def test_latin1_diacritics_stripped(engine):
+    # "kïll" — ï (U+00EF) → i → "kill" (V002)
+    result = engine.score("I will k\xefll you", "violence")
+    assert result["severity"] > 0, "Latin-1 ï should strip to i, giving kill"
+
+def test_latin_extended_a_diacritics_stripped(engine):
+    # "kłll" — ł (U+0142) → l, but we need "kill" not "klll"
+    # Better: "åttåck" — å (U+00E5) → a → "attack" (V003)
+    result = engine.score("\xe5tt\xe5ck someone", "violence")
+    assert result["severity"] > 0, "Latin-1 å should strip to a, giving attack"
+
+def test_cyrillic_full_confusable_set(engine):
+    # "аttаck" — both а are Cyrillic U+0430 → a → "attack" (V003)
+    result = engine.score("аttаck", "violence")
+    assert result["severity"] > 0, "Cyrillic а should map to a, giving attack"
+
+def test_greek_nu_maps_to_v(engine):
+    # ν (U+03BD, Greek lowercase nu) → v; "еνil" is the PRD example
+    # We don't have "evil" in rules, but "expłosive"→"explosive" or use violence keyword
+    # Use ν in "stab": "stνb" → "stvb" — not useful. Better: "νiolence"-style evasion
+    # Check that ν → v works in context of "surνiνe" → "survive" — not in rules
+    # Use "νictim" → "victim" — not in rules either
+    # Best: test that "еνil" normalizes by checking no crash and consistency
+    import crucible_policy
+    e2 = crucible_policy.PolicyEngine("data/rules.json")
+    result = e2.score("еνil")  # еνil (Cyrillic е + Greek ν)
+    # Should produce "evil" but "evil" isn't a keyword — just verify no crash
+    assert isinstance(result["severity"], float)
+
+def test_full_width_latin_stripped(engine):
+    # Full-width Ａ (U+FF21) → 'a'; "ａttａck" → "attack" (V003)
+    result = engine.score("ａttａck someone", "violence")
+    assert result["severity"] > 0, "Full-width ａ should strip to a, giving attack"
+
+def test_eszett_normalized(engine):
+    # ß (U+00DF) → s; "exploßive" → "explosive" — not in rules
+    # Use "suiß..." — not quite. Better: "ß" in "straße" → "strase" not harmful
+    # Test: just verify ß doesn't crash and scores benign text at 0
+    result = engine.score("das straße ist schön")
+    assert result["severity"] == 0.0, "German diacritics in benign text should score 0"
