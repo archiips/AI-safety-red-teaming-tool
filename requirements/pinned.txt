@@ -1,0 +1,13 @@
+# PINNED Azure SDK versions — DO NOT upgrade without running: pytest tests/contracts/ -v
+# Contract tests last verified: 2026-05-08
+# To upgrade: branch, update version, run contracts, merge only if green
+#
+# azure-ai-evaluation pinned after contract verification on 2026-05-08
+# azure-ai-inference pinned after contract verification on 2026-05-08
+# azure-ai-contentsafety pinned after contract verification on 2026-05-08
+
+azure-ai-evaluation==0.3.3
+azure-ai-inference==1.0.0b7
+azure-ai-contentsafety==1.0.0
+azure-identity>=1.16.0,<2.0.0
+azure-core>=1.30.0,<2.0.0

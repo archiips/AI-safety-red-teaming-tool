@@ -19,25 +19,27 @@
   - [ ] Understand the PyRIT adapter pattern (Pitfall #1) — this shapes your entire architecture
   - [ ] Understand the GIL release requirement (Pitfall #2) — this is your Week 2 gate
 
-- [ ] **Set up accounts and tools**
-  - [ ] Create Azure for Students account at azure.microsoft.com/free/students (get $100 credit)
-  - [ ] Set Azure budget alert at $50 (warning) and $80 (hard stop) in Cost Management
-  - [ ] Install Ollama on your laptop: `brew install ollama`
-  - [ ] Pull Phi-4-mini via Ollama: `ollama pull phi4-mini`
-  - [ ] Verify Ollama works: `ollama run phi4-mini "say hello"`
-  - [ ] Install CMake: `brew install cmake`
-  - [ ] Install RE2: `brew install re2`
-  - [ ] Install pybind11: `pip install pybind11`
-  - [ ] Install Git and confirm version: `git --version`
-  - [ ] Create GitHub repo named `crucible` — set to Public from day one
+- [x] **Set up accounts and tools**
+  ✅ **Completed:** 2026-05-07
+  - [x] Create Azure for Students account at azure.microsoft.com/free/students (get $100 credit)
+  - [x] Set Azure budget alert at $50 (warning) and $80 (hard stop) in Cost Management
+  - [x] Install Ollama on your laptop: `brew install ollama`
+  - [x] Pull Phi-4-mini via Ollama: `ollama pull phi4-mini`
+  - [x] Verify Ollama works: `ollama run phi4-mini "say hello"`
+  - [x] Install CMake: `brew install cmake`
+  - [x] Install RE2: `brew install re2`
+  - [x] Install pybind11: `pip install pybind11`
+  - [x] Install Git and confirm version: `git --version`
+  - [x] Create GitHub repo named `crucible` — set to Public from day one
 
 ---
 
 ## PHASE 1 — Project Foundation (Week 1)
 
-- [ ] **Task 1.1 — Repository & Project Structure**
-  - [ ] Initialize git repo: `git init && git remote add origin <url>`
-  - [ ] Create base directory structure:
+- [x] **Task 1.1 — Repository & Project Structure**
+  ✅ **Completed:** 2026-05-08
+  - [x] Initialize git repo: `git init && git remote add origin <url>`
+  - [x] Create base directory structure:
     ```
     crucible/
     ├── cpp/                  # C++ source files
@@ -66,8 +68,8 @@
     ├── .gitignore
     └── README.md
     ```
-  - [ ] Create `.gitignore` — include `.env`, `build/`, `__pycache__/`, `*.so`, `node_modules/`
-  - [ ] Create `.env.example` with all required env vars:
+  - [x] Create `.gitignore` — include `.env`, `build/`, `__pycache__/`, `*.so`, `node_modules/`
+  - [x] Create `.env.example` with all required env vars:
     ```
     CRUCIBLE_USE_LOCAL_LLM=true
     AZURE_INFERENCE_KEY=your_key_here
@@ -78,35 +80,36 @@
     REDIS_URL=redis://localhost:6379
     JWT_SECRET=change_this_in_production
     ```
-  - [ ] Create Python virtual environment: `python3.11 -m venv .venv`
-  - [ ] Create `requirements/base.txt` with initial dependencies
-  - [ ] Create `requirements/dev.txt` with pytest, black, ruff, etc.
-  - [ ] Create `requirements/pinned.txt` — **this file pins all Azure SDK versions**
-  - [ ] Install dependencies and verify: `pip install -r requirements/dev.txt`
-  - [ ] Create initial `pyproject.toml` for the `crucible` package
-  - [ ] Write empty `crucible/__init__.py`
-  - [ ] First commit: `git add . && git commit -m "chore: project scaffold"`
+  - [x] Create Python virtual environment: `python3.11 -m venv .venv`
+  - [x] Create `requirements/base.txt` with initial dependencies
+  - [x] Create `requirements/dev.txt` with pytest, black, ruff, etc.
+  - [x] Create `requirements/pinned.txt` — **this file pins all Azure SDK versions**
+  - [x] Install dependencies and verify: `pip install -r requirements/dev.txt`
+  - [x] Create initial `pyproject.toml` for the `crucible` package
+  - [x] Write empty `crucible/__init__.py`
+  - [x] First commit: `git add . && git commit -m "chore: project scaffold"`
 
-- [ ] **Task 1.2 — CMake + pybind11 Hello World**
-  - [ ] Create `cpp/CMakeLists.txt` with pybind11 and RE2 find_package calls
-  - [ ] Create `cpp/src/bindings.cpp` with a minimal `add(int a, int b)` function
-  - [ ] Build the module:
+- [x] **Task 1.2 — CMake + pybind11 Hello World**
+  ✅ **Completed:** 2026-05-08 — also wired up full PolicyEngine binding and score() method
+  - [x] Create `cpp/CMakeLists.txt` with pybind11 and RE2 find_package calls
+  - [x] Create `cpp/src/bindings.cpp` with a minimal `add(int a, int b)` function
+  - [x] Build the module:
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
     cmake --build . --config Release
     ```
-  - [ ] Verify Python can import it: `python3 -c "import crucible_policy; print(crucible_policy.add(1,2))"`
-  - [ ] Verify it returns `3` — if not, stop and debug before proceeding
-  - [ ] Add `build/` to `.gitignore`
-  - [ ] Document build commands in `README.md`
+  - [x] Verify Python can import it: `python3 -c "import crucible_policy; print(crucible_policy.add(1,2))"`
+  - [x] Verify it returns `3` — if not, stop and debug before proceeding
+  - [x] Add `build/` to `.gitignore`
+  - [x] Document build commands in `README.md`
 
-- [ ] **Task 1.3 — CRITICAL GATE: Verify GIL Release Before Proceeding**
-  > This is the single most important test in the project. Do not proceed to Task 1.4 until this passes.
-  - [ ] Add `py::mod_gil_not_used()` to the `PYBIND11_MODULE` macro in `bindings.cpp`
-  - [ ] Add `py::call_guard<py::gil_scoped_release>()` to the `add()` function's `.def()`
-  - [ ] Rebuild the module
-  - [ ] Write `tests/performance/test_gil_baseline.py`:
+- [x] **Task 1.3 — CRITICAL GATE: Verify GIL Release Before Proceeding**
+  ✅ **Completed:** 2026-05-08 — speedup: 4.21× at 8 workers, N=500
+  - [x] Add `py::mod_gil_not_used()` to the `PYBIND11_MODULE` macro in `bindings.cpp`
+  - [x] Add `py::call_guard<py::gil_scoped_release>()` to the `add()` function's `.def()`
+  - [x] Rebuild the module
+  - [x] Write `tests/performance/test_gil_baseline.py`:
     ```python
     import concurrent.futures, time
     import crucible_policy
@@ -128,10 +131,10 @@
         assert speedup >= 3.0, f"GIL not released! Speedup: {speedup:.2f}×"
         print(f"\nGIL confirmed released. Speedup: {speedup:.2f}×")
     ```
-  - [ ] Run test: `pytest tests/performance/test_gil_baseline.py -v -s`
-  - [ ] Confirm test passes with ≥3× speedup
-  - [ ] **If test fails: do NOT move to next task. Debug GIL release first.**
-  - [ ] Record baseline speedup number in a `BENCHMARKS.md` file
+  - [x] Run test: `pytest tests/performance/test_gil_baseline.py -v -s`
+  - [x] Confirm test passes with ≥3× speedup
+  - [x] **If test fails: do NOT move to next task. Debug GIL release first.**
+  - [x] Record baseline speedup number in a `BENCHMARKS.md` file
 
 ---
 
