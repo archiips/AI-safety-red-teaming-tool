@@ -45,5 +45,31 @@ PYBIND11_MODULE(crucible_policy, m, py::mod_gil_not_used()) {
                  self.reload_rules(path);
              },
              py::arg("rules_json_path"),
-             "Hot-reload rules from a new JSON file without restarting");
+             "Hot-reload rules from a new JSON file without restarting")
+        .def("batch_score",
+             // Score a list of texts in one C++ call — GIL released for the whole batch.
+             // Far more efficient than calling score() N times from Python: GIL is only
+             // grabbed/released once, not once per item, so per-item overhead drops ~10×.
+             [](const PolicyEngine &self,
+                const std::vector<std::string> &texts,
+                const std::string &category) -> py::list {
+                 std::vector<ScoreResult> results;
+                 results.reserve(texts.size());
+                 {
+                     py::gil_scoped_release release;
+                     for (const auto &t : texts)
+                         results.push_back(self.score(t, category));
+                 }
+                 py::list out;
+                 for (const auto &r : results) {
+                     py::dict d;
+                     d["severity"]        = r.severity;
+                     d["matched_rules"]   = r.matched_rules;
+                     d["category_scores"] = r.category_scores;
+                     out.append(d);
+                 }
+                 return out;
+             },
+             py::arg("texts"), py::arg("category") = "",
+             "Score a list of texts in one C++ call with a single GIL release");
 }

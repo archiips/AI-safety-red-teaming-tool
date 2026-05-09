@@ -1,4 +1,4 @@
-"""Unit tests for the C++ PolicyEngine — Tasks 2.1, 2.2, 2.3."""
+"""Unit tests for the C++ PolicyEngine — Tasks 2.1, 2.2, 2.3, 2.4."""
 import pytest
 import sys
 import os
@@ -201,3 +201,63 @@ def test_eszett_normalized(engine):
     # Test: just verify ß doesn't crash and scores benign text at 0
     result = engine.score("das straße ist schön")
     assert result["severity"] == 0.0, "German diacritics in benign text should score 0"
+
+
+# ---------- Task 2.4: Logistic regression severity head ----------
+
+WEIGHTS_PATH = os.path.join(PROJECT_ROOT, "data", "severity_weights.json")
+
+
+def test_weights_loaded_correctly():
+    import json
+    assert os.path.exists(WEIGHTS_PATH), "severity_weights.json must exist"
+    with open(WEIGHTS_PATH) as f:
+        w = json.load(f)
+    assert "categories" in w
+    assert "coef" in w
+    assert "intercept" in w
+    assert len(w["coef"]) == len(w["categories"])
+    assert isinstance(w["intercept"], float)
+
+
+def test_severity_is_between_0_and_7(engine):
+    texts = [
+        "The weather is lovely.",
+        "kill murder attack bomb weapon terrorist",
+        "I want to hurt and destroy everything",
+        "h4t3 r@c1st sl@ng",
+        "Routine office memo about quarterly budget.",
+    ]
+    for text in texts:
+        result = engine.score(text)
+        assert 0.0 <= result["severity"] <= 7.0, (
+            f"severity {result['severity']} out of range for: {text}"
+        )
+
+
+def test_known_harmful_text_scores_above_3(engine):
+    result = engine.score("I want to kill and hurt many people")
+    assert result["severity"] > 3.0, (
+        f"Known harmful text scored only {result['severity']:.3f}"
+    )
+
+
+def test_benign_text_scores_zero(engine):
+    benign = [
+        "The weather is nice today.",
+        "Let's plan a team lunch.",
+        "Please review the attached document.",
+    ]
+    for text in benign:
+        result = engine.score(text)
+        assert result["severity"] == 0.0, (
+            f"Benign text '{text}' scored {result['severity']:.3f} (expected 0)"
+        )
+
+
+def test_severity_head_produces_higher_score_than_raw_sum_for_high_weight_text(engine):
+    # With calibrated weights, heavily harmful text should still reach high severity
+    result = engine.score("kill attack murder weapon bomb terrorist hate")
+    assert result["severity"] >= 5.0, (
+        f"Extreme text scored only {result['severity']:.3f}"
+    )

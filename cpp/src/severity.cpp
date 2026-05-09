@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <filesystem>
 
 // ---------- Minimal JSON helpers ----------
 
@@ -41,6 +43,60 @@ static std::vector<std::string> split_objects(const std::string& array_json) {
         }
     }
     return objects;
+}
+
+// ---------- JSON array helpers (for severity_weights.json) ----------
+
+static std::vector<std::string> parse_string_array(const std::string& json,
+                                                    const std::string& key) {
+    auto pos = json.find("\"" + key + "\"");
+    if (pos == std::string::npos) return {};
+    pos = json.find('[', pos);
+    if (pos == std::string::npos) return {};
+    std::vector<std::string> result;
+    ++pos;
+    while (pos < json.size()) {
+        while (pos < json.size() && json[pos] != '"' && json[pos] != ']') ++pos;
+        if (pos >= json.size() || json[pos] == ']') break;
+        ++pos;
+        auto end = json.find('"', pos);
+        if (end == std::string::npos) break;
+        result.push_back(json.substr(pos, end - pos));
+        pos = end + 1;
+    }
+    return result;
+}
+
+static std::vector<double> parse_double_array(const std::string& json,
+                                              const std::string& key) {
+    auto pos = json.find("\"" + key + "\"");
+    if (pos == std::string::npos) return {};
+    pos = json.find('[', pos);
+    if (pos == std::string::npos) return {};
+    std::vector<double> result;
+    ++pos;
+    while (pos < json.size()) {
+        while (pos < json.size() &&
+               json[pos] != ']' && json[pos] != '-' && !std::isdigit(json[pos])) ++pos;
+        if (pos >= json.size() || json[pos] == ']') break;
+        auto end = json.find_first_of(",]", pos);
+        std::string tok = json.substr(pos, end - pos);
+        try { result.push_back(std::stod(tok)); } catch (...) {}
+        pos = end;
+    }
+    return result;
+}
+
+// ---------- SeverityHead ----------
+
+double SeverityHead::predict(const std::map<std::string, double>& cat_scores) const {
+    double z = intercept;
+    for (std::size_t i = 0; i < categories.size() && i < coef.size(); ++i) {
+        auto it = cat_scores.find(categories[i]);
+        if (it != cat_scores.end())
+            z += coef[i] * it->second;
+    }
+    return 7.0 / (1.0 + std::exp(-z));  // sigmoid × 7
 }
 
 // ---------- ScoreResult helper ----------
@@ -90,20 +146,61 @@ void PolicyEngine::load_and_build(const std::string& rules_json_path) {
     ac_state_->build(); // force failure-state construction before first search
 }
 
+// Derive severity_weights.json path from rules_json_path (same directory)
+void PolicyEngine::try_load_severity_head(const std::string& rules_json_path) {
+    namespace fs = std::filesystem;
+    fs::path weights_path = fs::path(rules_json_path).parent_path() / "severity_weights.json";
+    if (!fs::exists(weights_path)) return;
+
+    std::ifstream wf(weights_path);
+    if (!wf.is_open()) return;
+    std::string wjson((std::istreambuf_iterator<char>(wf)),
+                       std::istreambuf_iterator<char>());
+
+    head_.categories = parse_string_array(wjson, "categories");
+    head_.coef       = parse_double_array(wjson, "coef");
+
+    auto ipos = wjson.find("\"intercept\"");
+    if (ipos != std::string::npos) {
+        ipos = wjson.find(':', ipos) + 1;
+        while (ipos < wjson.size() && (wjson[ipos] == ' ' || wjson[ipos] == '\t')) ++ipos;
+        auto iend = wjson.find_first_of(",}", ipos);
+        try { head_.intercept = std::stod(wjson.substr(ipos, iend - ipos)); }
+        catch (...) { head_.intercept = 0.0; }
+    }
+
+    head_.loaded = !head_.categories.empty() && head_.coef.size() == head_.categories.size();
+}
+
 PolicyEngine::PolicyEngine(const std::string& rules_json_path)
     : ac_state_(std::make_unique<AhoCorasickState>())
 {
     load_and_build(rules_json_path);
+    try_load_severity_head(rules_json_path);
 }
 
 PolicyEngine::~PolicyEngine() = default;
 
 void PolicyEngine::reload_rules(const std::string& rules_json_path) {
-    load_and_build(rules_json_path);
+    // Build new state outside the lock (expensive work done without blocking readers)
+    std::vector<Rule> new_rules;
+    std::unique_ptr<AhoCorasickState> new_ac;
+    SeverityHead new_head;
+
+    // Temporarily use a fresh engine to build state, then steal its internals
+    {
+        PolicyEngine tmp(rules_json_path);
+        std::unique_lock<std::shared_mutex> lock(rw_mutex_);
+        rules_    = std::move(tmp.rules_);
+        ac_state_ = std::move(tmp.ac_state_);
+        head_     = std::move(tmp.head_);
+    }
 }
 
 ScoreResult PolicyEngine::score(const std::string& text,
                                 const std::string& category) const {
+    std::shared_lock<std::shared_mutex> lock(rw_mutex_);
+
     // Normalize: homoglyph substitution + leetspeak + base64 decode
     std::string normalized = normalize_text(text);
     std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
@@ -144,10 +241,20 @@ ScoreResult PolicyEngine::score(const std::string& text,
     if (de_sep != normalized)
         apply_matches(ac_state_->search(de_sep));
 
-    // Clamp composite severity to 0–7
-    double total = 0.0;
-    for (auto& [cat, w] : result.category_scores) total += w;
-    result.severity = std::min(total, 7.0);
+    // No rules matched → definitely not harmful; skip the severity head
+    if (result.matched_rules.empty()) {
+        result.severity = 0.0;
+        return result;
+    }
+
+    // Severity: use logistic head if weights were loaded, else clamp raw sum
+    if (head_.loaded) {
+        result.severity = head_.predict(result.category_scores);
+    } else {
+        double total = 0.0;
+        for (auto& [cat, w] : result.category_scores) total += w;
+        result.severity = std::min(total, 7.0);
+    }
 
     return result;
 }

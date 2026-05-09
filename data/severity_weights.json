@@ -1,0 +1,30 @@
+{
+  "categories": [
+    "bioweapons",
+    "crime",
+    "deception",
+    "hate",
+    "manipulation",
+    "privacy",
+    "radicalization",
+    "self_harm",
+    "sexual",
+    "violence",
+    "weapons"
+  ],
+  "coef": [
+    2.2826831199163187,
+    2.9485604918000514,
+    2.739946795030306,
+    2.710560558433912,
+    3.318285168734768,
+    4.371720237343923,
+    2.50838581715626,
+    2.4251063681517264,
+    2.156862365523558,
+    2.0048243425376038,
+    2.3601760501266646
+  ],
+  "intercept": -3.0940852431291344,
+  "note": "apply sigmoid(dot(coef, category_scores) + intercept) \u00d7 7 to get severity"
+}

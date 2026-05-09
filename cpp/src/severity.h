@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <shared_mutex>
 
 // Declared in unicode_norm.cpp — apply before AC matching
 std::string normalize_text(const std::string& input);
@@ -27,6 +28,19 @@ struct Rule {
     std::string description;
 };
 
+// Logistic regression severity head — loaded from severity_weights.json
+struct SeverityHead {
+    std::vector<std::string> categories; // feature order
+    std::vector<double> coef;            // one per category
+    double intercept;
+    bool loaded;
+
+    SeverityHead() : intercept(0.0), loaded(false) {}
+
+    // sigmoid(coef · category_scores + intercept) × 7
+    double predict(const std::map<std::string, double>& cat_scores) const;
+};
+
 class PolicyEngine {
 public:
     explicit PolicyEngine(const std::string &rules_json_path);
@@ -39,7 +53,12 @@ public:
 
 private:
     void load_and_build(const std::string &rules_json_path);
+    void try_load_severity_head(const std::string &rules_json_path);
 
+    // rw_mutex_ guards rules_, ac_state_, and head_ for concurrent reload safety.
+    // score() holds a shared_lock (readers); reload_rules() holds a unique_lock.
+    mutable std::shared_mutex rw_mutex_;
     std::vector<Rule> rules_;
     std::unique_ptr<AhoCorasickState> ac_state_;
+    SeverityHead head_;
 };
