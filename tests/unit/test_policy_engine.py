@@ -131,3 +131,29 @@ def test_dotted_obfuscation_detected(engine):
     # "k.i.l.l" → "kill"
     result = engine.score("I will k.i.l.l you", "violence")
     assert result["severity"] > 0, "Dotted 'k.i.l.l' should match V002"
+
+
+# ---------- Extended leet coverage (multi-char + new single-char mappings) ----------
+
+def test_digit_1_maps_to_i_not_l(engine):
+    # 1→i enables k1ll→kill (V002)
+    result = engine.score("I will k1ll you", "violence")
+    assert result["severity"] > 0, "k1ll should normalize to kill via 1→i"
+
+
+def test_multi_char_leet_slash_v(engine):
+    # |3 → b; combine: |3omb → bomb (part of "how to make a bomb" rule C001)
+    result = engine.score("how to make a |30mb", "crime")
+    assert result["severity"] > 0, "|30mb should normalize to bomb"
+
+
+def test_multi_char_pipe_bracket_k(engine):
+    # |< → k; t3rr0r1st should match via single-char leet
+    result = engine.score("t3rr0r1st", "radicalization")
+    assert result["severity"] > 0, "t3rr0r1st should normalize to terrorist"
+
+
+def test_at_sign_in_attack(engine):
+    # @ttack → attack (V003)
+    result = engine.score("I will @ttack you", "violence")
+    assert result["severity"] > 0, "@ttack should normalize to attack via @→a"

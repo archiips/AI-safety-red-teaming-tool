@@ -1,6 +1,8 @@
 #include "severity.h"
-#include "../include/aho_corasick.hpp"
+#include "aho_corasick_state.h"
 #include <re2/re2.h>
+#include <unordered_map>
+#include <unordered_set>
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
@@ -41,15 +43,7 @@ static std::vector<std::string> split_objects(const std::string& array_json) {
     return objects;
 }
 
-// ---------- AhoCorasickState holds the built trie + keyword→rule_id map ----------
-
-struct AhoCorasickState {
-    aho_corasick::trie ac;
-    // maps lowercase keyword → rule_id (for result lookup after match)
-    std::unordered_map<std::string, std::string> keyword_to_rule;
-};
-
-// ---------- ScoreResult helpers ----------
+// ---------- ScoreResult helper ----------
 
 std::map<std::string, double> ScoreResult::to_dict() const {
     return category_scores;
@@ -86,16 +80,14 @@ void PolicyEngine::load_and_build(const std::string& rules_json_path) {
 
         if (r.id.empty() || r.keyword.empty()) continue;
 
-        // Lowercase keyword for case-insensitive matching
         std::string lc = r.keyword;
         std::transform(lc.begin(), lc.end(), lc.begin(), ::tolower);
 
         rules_.push_back(r);
-        ac_state_->keyword_to_rule[lc] = r.id;
-        ac_state_->ac.insert(lc);
+        ac_state_->insert(lc, r.id);
     }
 
-    ac_state_->ac.build(); // build failure links once
+    ac_state_->build(); // force failure-state construction before first search
 }
 
 PolicyEngine::PolicyEngine(const std::string& rules_json_path)
@@ -112,55 +104,47 @@ void PolicyEngine::reload_rules(const std::string& rules_json_path) {
 
 ScoreResult PolicyEngine::score(const std::string& text,
                                 const std::string& category) const {
-    // Normalize: lowercase + leetspeak/homoglyph/obfuscation (defined in unicode_norm.cpp)
+    // Normalize: homoglyph substitution + leetspeak + base64 decode
     std::string normalized = normalize_text(text);
     std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
 
+    // RE2: strip separator chars between single letters to de-obfuscate h-u-r-t → hurt.
+    // Compiled once; loop until stable (handles k.i.l.l → kil.l → kill).
+    static const re2::RE2 sep_pattern(R"(([a-z])[-. ]([a-z]))");
+    std::string de_sep = normalized;
+    {
+        std::string prev;
+        do {
+            prev = de_sep;
+            re2::RE2::GlobalReplace(&de_sep, sep_pattern, R"(\1\2)");
+        } while (de_sep != prev);
+    }
+
+    // Collect matched rule IDs from both search passes, deduplicating across them.
+    std::unordered_set<std::string> seen;
     ScoreResult result;
     result.severity = 0.0;
 
-    // RE2: detect hyphenated/dotted obfuscation and also strip separators
-    // (normalize_text already handles this, but we add a RE2 fallback for edge cases)
-    static const re2::RE2 sep_pattern(R"(([a-z])[-. ]([a-z]))");
-    std::string de_sep = normalized;
-    std::string prev;
-    do {
-        prev = de_sep;
-        re2::RE2::GlobalReplace(&de_sep, sep_pattern, R"(\1\2)");
-    } while (de_sep != prev);
+    auto apply_matches = [&](const std::vector<std::string>& rule_ids) {
+        for (auto& rule_id : rule_ids) {
+            if (!seen.insert(rule_id).second) continue; // already recorded
 
-    // Run AC on both normalized and de-obfuscated versions to catch all variants
-    auto run_ac = [&](const std::string& input) {
-        auto hits = ac_state_->ac.parse_text(input);
-        for (auto& hit : hits) {
-            auto it = ac_state_->keyword_to_rule.find(hit.keyword);
-            if (it == ac_state_->keyword_to_rule.end()) continue;
-
-            const std::string& rule_id = it->second;
-
-            // Find the rule
             const Rule* rule = nullptr;
-            for (auto& r : rules_) {
+            for (auto& r : rules_)
                 if (r.id == rule_id) { rule = &r; break; }
-            }
             if (!rule) continue;
             if (!category.empty() && rule->category != category) continue;
-
-            // Avoid duplicate matches (same rule_id already recorded)
-            bool already = false;
-            for (auto& m : result.matched_rules)
-                if (m == rule_id) { already = true; break; }
-            if (already) continue;
 
             result.matched_rules.push_back(rule_id);
             result.category_scores[rule->category] += rule->weight;
         }
     };
 
-    run_ac(normalized);
-    if (de_sep != normalized) run_ac(de_sep);
+    apply_matches(ac_state_->search(normalized));
+    if (de_sep != normalized)
+        apply_matches(ac_state_->search(de_sep));
 
-    // Clamp to 0–7
+    // Clamp composite severity to 0–7
     double total = 0.0;
     for (auto& [cat, w] : result.category_scores) total += w;
     result.severity = std::min(total, 7.0);
