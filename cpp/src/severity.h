@@ -4,6 +4,9 @@
 #include <map>
 #include <memory>
 
+// Declared in unicode_norm.cpp — apply before AC matching
+std::string normalize_text(const std::string& input);
+
 struct ScoreResult {
     double severity;
     std::vector<std::string> matched_rules;

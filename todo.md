@@ -140,14 +140,15 @@
 
 ## PHASE 2 — C++ Policy Engine (Weeks 2–3)
 
-- [ ] **Task 2.1 — C++ Project Structure & Header Setup**
-  - [ ] Create `cpp/src/severity.h` — declare `PolicyEngine` class and `ScoreResult` struct
-  - [ ] Create `cpp/src/severity.cpp` — stub implementation returning zeros
-  - [ ] Create `cpp/src/aho_corasick.cpp` — stub, just includes the header
-  - [ ] Create `cpp/src/unicode_norm.cpp` — stub
-  - [ ] Update `CMakeLists.txt` to compile all four files
-  - [ ] Rebuild and verify Python import still works
-  - [ ] Write `tests/unit/test_policy_engine.py` with one test that imports and calls `score()`:
+- [x] **Task 2.1 — C++ Project Structure & Header Setup**
+  ✅ **Completed:** 2026-05-08
+  - [x] Create `cpp/src/severity.h` — declare `PolicyEngine` class and `ScoreResult` struct
+  - [x] Create `cpp/src/severity.cpp` — stub implementation returning zeros
+  - [x] Create `cpp/src/aho_corasick.cpp` — stub, just includes the header
+  - [x] Create `cpp/src/unicode_norm.cpp` — stub
+  - [x] Update `CMakeLists.txt` to compile all four files
+  - [x] Rebuild and verify Python import still works
+  - [x] Write `tests/unit/test_policy_engine.py` with one test that imports and calls `score()`:
     ```python
     def test_engine_importable_and_callable():
         from crucible_policy import PolicyEngine
@@ -157,7 +158,7 @@
         assert "matched_rules" in result
         assert isinstance(result["matched_rules"], list)
     ```
-  - [ ] Create `data/rules.json` with at least 5 test rules in this format:
+  - [x] Create `data/rules.json` with at least 5 test rules in this format:
     ```json
     {"rules": [
       {"id": "V001", "category": "violence", "keyword": "hurt", "weight": 2.0,
@@ -167,44 +168,46 @@
     ]}
     ```
 
-- [ ] **Task 2.2 — Aho-Corasick Implementation**
-  - [ ] Download `cjgdev/aho_corasick` header: `curl -O https://raw.githubusercontent.com/cjgdev/aho_corasick/master/src/aho_corasick.hpp`
-  - [ ] Place it in `cpp/include/aho_corasick.hpp`
-  - [ ] Implement trie building in `PolicyEngine` constructor:
-    - [ ] Parse `rules.json` into a vector of `Rule` structs
-    - [ ] Build Aho-Corasick trie at startup (once, not per call)
-    - [ ] Verify trie build time < 100ms on startup
-  - [ ] Implement `score()` method:
-    - [ ] Run Aho-Corasick search on input text
-    - [ ] Collect matched rule IDs
-    - [ ] Sum weights per category
-    - [ ] Return `ScoreResult` struct (severity, matched_rules, category_scores)
-  - [ ] Write unit tests for Aho-Corasick matching:
-    - [ ] `test_known_violence_keyword_matches()` — "I want to hurt you" hits V001
-    - [ ] `test_no_match_returns_zero_severity()` — "The weather is nice" returns severity=0
-    - [ ] `test_multiple_keywords_in_one_string()` — multiple matches sum correctly
-    - [ ] `test_case_insensitive_matching()` — "HURT" matches same as "hurt"
-    - [ ] `test_overlapping_patterns()` — "killer" matches "kill" but not "ill"
-  - [ ] Expand `data/rules.json` to 50 rules across all 10 harm categories
-  - [ ] Verify all unit tests pass: `pytest tests/unit/test_policy_engine.py -v`
+- [x] **Task 2.2 — Aho-Corasick Implementation**
+  ✅ **Completed:** 2026-05-08 — wrote own header-only AC (cjgdev URL was 404); 16 unit tests pass
+  - [x] Download `cjgdev/aho_corasick` header: wrote own `cpp/include/aho_corasick.hpp` (URL 404, custom implementation)
+  - [x] Place it in `cpp/include/aho_corasick.hpp`
+  - [x] Implement trie building in `PolicyEngine` constructor:
+    - [x] Parse `rules.json` into a vector of `Rule` structs
+    - [x] Build Aho-Corasick trie at startup (once, not per call)
+    - [x] Verify trie build time < 100ms on startup
+  - [x] Implement `score()` method:
+    - [x] Run Aho-Corasick search on input text
+    - [x] Collect matched rule IDs
+    - [x] Sum weights per category
+    - [x] Return `ScoreResult` struct (severity, matched_rules, category_scores)
+  - [x] Write unit tests for Aho-Corasick matching:
+    - [x] `test_known_violence_keyword_matches()` — "I want to hurt you" hits V001
+    - [x] `test_no_match_returns_zero_severity()` — "The weather is nice" returns severity=0
+    - [x] `test_multiple_keywords_in_one_string()` — multiple matches sum correctly
+    - [x] `test_case_insensitive_matching()` — "HURT" matches same as "hurt"
+    - [x] `test_overlapping_patterns()` — "killer" matches "kill" but not "ill"
+  - [x] Expand `data/rules.json` to 50 rules across all 10 harm categories
+  - [x] Verify all unit tests pass: `pytest tests/unit/test_policy_engine.py -v`
 
-- [ ] **Task 2.3 — RE2 Regex + Unicode Normalization**
-  - [ ] Implement NFKC Unicode normalization in `unicode_norm.cpp`:
-    - [ ] Use ICU or write a minimal lookup table for common homoglyphs
-    - [ ] Test: `normalize("еνil")` → `"evil"` (Cyrillic е, Greek ν)
-  - [ ] Implement leetspeak canonicalization:
-    - [ ] Build a 300-entry substitution map (h4t3→hate, @ss→ass, etc.)
-    - [ ] Apply BEFORE Aho-Corasick matching
-    - [ ] Test: `score("h4t3 speech", "hate")` returns severity > 0
-  - [ ] Add RE2 regex fallback for patterns needing context:
-    - [ ] Pattern for Base64-encoded content detection
-    - [ ] Pattern for repeated character obfuscation (h-u-r-t, h.u.r.t)
-  - [ ] Write unit tests for normalization:
-    - [ ] `test_leetspeak_normalized_before_matching()`
-    - [ ] `test_homoglyph_substitution()`
-    - [ ] `test_base64_encoded_violence_detected()`
-    - [ ] `test_hyphenated_obfuscation_detected()`
-  - [ ] Rebuild and verify all existing tests still pass
+- [x] **Task 2.3 — RE2 Regex + Unicode Normalization**
+  ✅ **Completed:** 2026-05-08 — homoglyph table, leetspeak, base64 decode, RE2 separator stripping; all 16 tests pass
+  - [x] Implement NFKC Unicode normalization in `unicode_norm.cpp`:
+    - [x] Use ICU or write a minimal lookup table for common homoglyphs
+    - [x] Test: `normalize("еνil")` → `"evil"` (Cyrillic е, Greek ν)
+  - [x] Implement leetspeak canonicalization:
+    - [x] Build a 300-entry substitution map (h4t3→hate, @ss→ass, etc.)
+    - [x] Apply BEFORE Aho-Corasick matching
+    - [x] Test: `score("h4t3 speech", "hate")` returns severity > 0
+  - [x] Add RE2 regex fallback for patterns needing context:
+    - [x] Pattern for Base64-encoded content detection
+    - [x] Pattern for repeated character obfuscation (h-u-r-t, h.u.r.t)
+  - [x] Write unit tests for normalization:
+    - [x] `test_leetspeak_normalized_before_matching()`
+    - [x] `test_homoglyph_substitution()`
+    - [x] `test_base64_encoded_violence_detected()`
+    - [x] `test_hyphenated_obfuscation_detected()`
+  - [x] Rebuild and verify all existing tests still pass
 
 - [ ] **Task 2.4 — Logistic Regression Severity Head**
   - [ ] Download HarmBench dataset: `huggingface-cli download harmbench/HarmBench --local-dir data/harmbench`
