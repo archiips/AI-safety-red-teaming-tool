@@ -258,70 +258,73 @@
 
 ## PHASE 3 — Azure Setup & PyRIT Adapter (Week 4)
 
-- [ ] **Task 3.1 — Azure Services Setup**
-  - [ ] Create Azure AI Foundry project in portal
-  - [ ] Deploy Phi-4-mini-instruct model to Foundry
-  - [ ] Note the inference endpoint URL and API key
-  - [ ] Create Azure Content Safety resource (use **F0 free tier** — not S0)
-  - [ ] Note the Content Safety endpoint and key
-  - [ ] Add all keys to `.env` (NOT `.env.example`, which has placeholders)
-  - [ ] Verify Phi-4-mini via curl:
+- [x] **Task 3.1 — Azure Services Setup**
+  ✅ **Completed:** 2026-05-09 — Foundry project crucible-dev (East US 2); Phi-4-mini-instruct deployed GlobalStandard; Content Safety F0 crucible-safety-cs (East US 2); both verified via scripts/verify_azure.sh; correct inference endpoint is base resource /models path (project-scoped path returned API version error)
+  - [x] Create Azure AI Foundry project in portal
+  - [x] Deploy Phi-4-mini-instruct model to Foundry
+  - [x] Note the inference endpoint URL and API key
+  - [x] Create Azure Content Safety resource (use **F0 free tier** — not S0)
+  - [x] Note the Content Safety endpoint and key
+  - [x] Add all keys to `.env` (NOT `.env.example`, which has placeholders)
+  - [x] Verify Phi-4-mini via curl:
     ```bash
     curl -X POST "$AZURE_INFERENCE_ENDPOINT/chat/completions" \
       -H "Authorization: Bearer $AZURE_INFERENCE_KEY" \
       -H "Content-Type: application/json" \
       -d '{"model":"Phi-4-mini-instruct","messages":[{"role":"user","content":"hello"}]}'
     ```
-  - [ ] Verify Content Safety via curl:
+  - [x] Verify Content Safety via curl:
     ```bash
     curl -X POST "$AZURE_CONTENT_SAFETY_ENDPOINT/contentsafety/text:analyze" \
       -H "Ocp-Apim-Subscription-Key: $AZURE_CONTENT_SAFETY_KEY" \
       -H "Content-Type: application/json" \
       -d '{"text": "I want to hurt someone"}'
     ```
-  - [ ] Confirm F0 tier is active (check resource SKU in portal — must say "F0")
+  - [x] Confirm F0 tier is active (check resource SKU in portal — must say "F0")
 
-- [ ] **Task 3.2 — PyRIT Adapter (Pitfall #1 — CRITICAL)**
+- [x] **Task 3.2 — PyRIT Adapter (Pitfall #1 — CRITICAL)**
+  ✅ **Completed:** 2026-05-08 — pinned azure-ai-evaluation==1.16.7 (was 0.3.3); 26 contract tests pass; adapter with CATEGORY_MAP, STRATEGY_MAP, _normalize_result; 17 unit tests pass (1 integration skipped, requires Azure)
   > Read PRD Section 14 Pitfall #1 completely before starting this task.
-  - [ ] Install azure-ai-evaluation and note the exact installed version:
+  - [x] Install azure-ai-evaluation and note the exact installed version:
     ```bash
     pip install azure-ai-evaluation
     pip show azure-ai-evaluation | grep Version
     ```
-  - [ ] **Immediately pin this version** in `requirements/pinned.txt`
-  - [ ] Do the same for `azure-ai-inference` and `azure-ai-contentsafety`
-  - [ ] Write `tests/contracts/test_pyrit_contract.py` (copy from PRD Section 14 Pitfall #1)
-  - [ ] Run contract tests NOW, before writing the adapter: `pytest tests/contracts/ -v`
-  - [ ] Confirm all contract tests pass on the pinned version — record this in a comment at the top of `requirements/pinned.txt`
-  - [ ] Write `crucible/adapters/pyrit_adapter.py`:
-    - [ ] All `azure.ai.evaluation` imports inside this file ONLY
-    - [ ] `CrucibleRedTeamAdapter` class with `scan()` method
-    - [ ] `_normalize_result()` method that converts SDK output to internal schema
-    - [ ] `CATEGORY_MAP` and `STRATEGY_MAP` dicts
-  - [ ] Write unit tests for the adapter using mock (no real Azure call):
-    - [ ] `test_adapter_maps_category_strings_to_risk_category_enum()`
-    - [ ] `test_adapter_maps_strategy_strings_to_attack_strategy_enum()`
-    - [ ] `test_adapter_normalize_result_returns_list_of_dicts()`
-    - [ ] `test_adapter_normalize_result_has_required_keys()` — category, strategy, prompt, seed
-    - [ ] `test_unknown_category_raises_key_error()` — catches typos early
-  - [ ] Write integration test (requires Azure, skip with `@pytest.mark.integration`):
-    - [ ] `test_real_scan_generates_at_least_one_attack()`
-  - [ ] Document the version upgrade protocol in `CONTRIBUTING.md`
+  - [x] **Immediately pin this version** in `requirements/pinned.txt`
+  - [x] Do the same for `azure-ai-inference` and `azure-ai-contentsafety`
+  - [x] Write `tests/contracts/test_pyrit_contract.py` (copy from PRD Section 14 Pitfall #1)
+  - [x] Run contract tests NOW, before writing the adapter: `pytest tests/contracts/ -v`
+  - [x] Confirm all contract tests pass on the pinned version — record this in a comment at the top of `requirements/pinned.txt`
+  - [x] Write `crucible/adapters/pyrit_adapter.py`:
+    - [x] All `azure.ai.evaluation` imports inside this file ONLY
+    - [x] `CrucibleRedTeamAdapter` class with `scan()` method
+    - [x] `_normalize_result()` method that converts SDK output to internal schema
+    - [x] `CATEGORY_MAP` and `STRATEGY_MAP` dicts
+  - [x] Write unit tests for the adapter using mock (no real Azure call):
+    - [x] `test_adapter_maps_category_strings_to_risk_category_enum()`
+    - [x] `test_adapter_maps_strategy_strings_to_attack_strategy_enum()`
+    - [x] `test_adapter_normalize_result_returns_list_of_dicts()`
+    - [x] `test_adapter_normalize_result_has_required_keys()` — category, strategy, prompt, seed
+    - [x] `test_unknown_category_raises_key_error()` — catches typos early
+  - [x] Write integration test (requires Azure, skip with `@pytest.mark.integration`):
+    - [x] `test_real_scan_generates_at_least_one_attack()`
+  - [x] Document the version upgrade protocol in `CONTRIBUTING.md`
 
-- [ ] **Task 3.3 — Database Setup**
-  - [ ] Create `crucible/db/models.py` with SQLAlchemy 2.0 models for all 7 tables:
-    - [ ] `Run`, `Attack`, `Response`, `Score`, `ScoreFusion`, `Policy`, `Manifest`
-    - [ ] All foreign keys and indexes (especially: `CREATE INDEX ON scores(response_id, scorer_type, category)`)
-  - [ ] Create `alembic.ini` and `alembic/` directory
-  - [ ] Create initial Alembic migration: `alembic revision --autogenerate -m "initial schema"`
-  - [ ] Run migration against SQLite: `alembic upgrade head`
-  - [ ] Verify all tables exist: `sqlite3 crucible.db ".tables"`
-  - [ ] Write unit tests for models:
-    - [ ] `test_run_model_creates_with_required_fields()`
-    - [ ] `test_attack_model_foreign_key_to_run()`
-    - [ ] `test_score_model_scorer_type_constraint()` — only "cpp_engine", "azure_cs", "llm_judge"
-    - [ ] `test_hot_path_index_exists()` — query PRAGMA index_list for the scores index
-  - [ ] Seed database with 5 test runs + attacks + responses + scores for UI development
+- [x] **Task 3.3 — Database Setup**
+  ✅ **Completed:** 2026-05-08 — SQLAlchemy 2.0 models for all 7 tables; Alembic migration run; hot-path index verified; 14 model unit tests pass; seeded 5 runs × 5 attacks = 25 responses, 75 scores
+  - [x] Create `crucible/db/models.py` with SQLAlchemy 2.0 models for all 7 tables:
+    - [x] `Run`, `Attack`, `Response`, `Score`, `ScoreFusion`, `Policy`, `Manifest`
+    - [x] All foreign keys and indexes (especially: `CREATE INDEX ON scores(response_id, scorer_type, category)`)
+  - [x] Create `alembic.ini` and `alembic/` directory
+  - [x] Create initial Alembic migration: `alembic revision --autogenerate -m "initial schema"`
+  - [x] Run migration against SQLite: `alembic upgrade head`
+  - [x] Verify all tables exist: `sqlite3 crucible.db ".tables"`
+  - [x] Write unit tests for models:
+    - [x] `test_run_model_creates_with_required_fields()`
+    - [x] `test_attack_model_foreign_key_to_run()`
+    - [x] `test_score_model_scorer_type_constraint()` — only "cpp_engine", "azure_cs", "llm_judge"
+    - [x] `test_hot_path_index_exists()` — query PRAGMA index_list for the scores index
+  - [x] Seed database with 5 test runs + attacks + responses + scores for UI development
 
 ---
 
