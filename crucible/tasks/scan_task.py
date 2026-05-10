@@ -299,6 +299,27 @@ def run_scan_task(self, run_id: str) -> None:
         if composite_scores:
             run.asr = sum(1 for s in composite_scores if s > 3) / len(composite_scores)
 
+        # Generate reproducibility manifest with known scorer versions
+        try:
+            import importlib.metadata as _meta
+            from crucible.manifests import generate_manifest
+
+            def _pkg_version(name: str, fallback: str) -> str:
+                try:
+                    return _meta.version(name)
+                except Exception:
+                    return fallback
+
+            scorer_versions = {
+                "cpp_engine": "1.0.0",
+                "azure_cs": _pkg_version("azure-ai-contentsafety", "unknown"),
+                "llm_judge": os.environ.get("OLLAMA_MODEL", "phi4-mini"),
+            }
+            manifest = generate_manifest(run, scorer_versions=scorer_versions)
+            db.add(manifest)
+        except Exception as exc:
+            log.warning("Manifest generation failed for run %s: %s", run_id, exc)
+
         run.status = RunStatus.completed
         db.commit()
 

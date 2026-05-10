@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { QueryClient, QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query'
 import { api } from './api/client'
 import RunForm from './components/RunForm'
@@ -15,6 +15,17 @@ function AppInner() {
   const [activeRunId, setActiveRunId] = useState<string | null>(null)
   const [selectedCell, setSelectedCell] = useState<HeatmapCell | null>(null)
   const [compareRunId, setCompareRunId] = useState<string | null>(null)
+  const [showDiff, setShowDiff] = useState(true)
+
+  const downloadReport = useCallback((report: RunReport) => {
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `crucible-report-${report.run_id}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [])
 
   const { data: runs = [], refetch: refetchRuns } = useQuery({
     queryKey: ['runs'],
@@ -22,12 +33,13 @@ function AppInner() {
     refetchInterval: activeRunId ? 5000 : false,
   })
 
-  const { data: report } = useQuery({
+  const { data: report } = useQuery<RunReport>({
     queryKey: ['report', activeRunId],
     queryFn: () => api.getReport(activeRunId!),
     enabled: !!activeRunId,
-    refetchInterval: (data: RunReport | undefined) =>
-      data?.run?.status === 'completed' ? false : 4000,
+    // React Query v5: refetchInterval callback receives the Query object
+    refetchInterval: (query) =>
+      (query.state.data as RunReport | undefined)?.status === 'completed' ? false : 4000,
   })
 
   const { data: compareReport } = useQuery({
@@ -209,14 +221,55 @@ function AppInner() {
                       <div className="panel" style={{ flex: 1 }}>
                         <div className="panel-header">
                           Severity Heatmap
-                          {compareRunId && (
-                            <span style={{
-                              marginLeft: 'auto', fontSize: 9,
-                              color: '#f59e0b', letterSpacing: 1,
-                            }}>
-                              ▲▼ DIFF MODE
-                            </span>
-                          )}
+                          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {compareRunId && (
+                              <button
+                                onClick={() => setShowDiff(v => !v)}
+                                style={{
+                                  padding: '3px 10px',
+                                  borderRadius: 5,
+                                  border: `1px solid ${showDiff ? '#f59e0b66' : '#2e3347'}`,
+                                  background: showDiff ? 'rgba(245,158,11,0.1)' : 'transparent',
+                                  cursor: 'pointer',
+                                  fontSize: 9,
+                                  fontFamily: 'inherit',
+                                  fontWeight: 600,
+                                  letterSpacing: 1,
+                                  color: showDiff ? '#f59e0b' : '#4b5280',
+                                }}
+                              >
+                                ▲▼ DIFF {showDiff ? 'ON' : 'OFF'}
+                              </button>
+                            )}
+                            {report.status === 'completed' && (
+                              <button
+                                onClick={() => downloadReport(report)}
+                                style={{
+                                  padding: '3px 10px',
+                                  borderRadius: 5,
+                                  border: '1px solid #1e2235',
+                                  background: 'transparent',
+                                  cursor: 'pointer',
+                                  fontSize: 9,
+                                  fontFamily: 'inherit',
+                                  fontWeight: 600,
+                                  letterSpacing: 1,
+                                  color: '#4b5280',
+                                  transition: 'all 0.15s',
+                                }}
+                                onMouseEnter={e => {
+                                  (e.target as HTMLElement).style.color = '#a5b4fc'
+                                  ;(e.target as HTMLElement).style.borderColor = 'rgba(99,102,241,0.3)'
+                                }}
+                                onMouseLeave={e => {
+                                  (e.target as HTMLElement).style.color = '#4b5280'
+                                  ;(e.target as HTMLElement).style.borderColor = '#1e2235'
+                                }}
+                              >
+                                ↓ REPORT
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div style={{ padding: 20 }}>
                           <HeatmapChart
@@ -224,6 +277,7 @@ function AppInner() {
                             onCellClick={setSelectedCell}
                             selectedCell={selectedCell}
                             compareData={compareReport?.heatmap}
+                            showDiff={showDiff}
                           />
                         </div>
                       </div>
@@ -279,7 +333,7 @@ function AppInner() {
                 <div className="panel-header">
                   Baseline Heatmap
                   <span style={{ fontSize: 10, color: '#4b5280', fontWeight: 400, marginLeft: 8 }}>
-                    {compareReport.run.target_model}
+                    {compareReport.target_model}
                   </span>
                 </div>
                 <div style={{ padding: 20 }}>

@@ -23,6 +23,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+// The backend uses run_id as the primary key field name. Map it to id for
+// frontend consistency so all components can use run.id uniformly.
+function normalizeRun(raw: Record<string, unknown>): Run {
+  return { ...raw, id: raw.run_id } as unknown as Run
+}
+
 export const api = {
   createRun: (config: RunConfig) =>
     request<{ run_id: string }>('/runs', {
@@ -30,13 +36,15 @@ export const api = {
       body: JSON.stringify(config),
     }),
 
-  getRun: (id: string) => request<Run>(`/runs/${id}`),
+  getRun: (id: string) =>
+    request<Record<string, unknown>>(`/runs/${id}`).then(normalizeRun),
 
   getReport: (id: string) => request<RunReport>(`/runs/${id}/report`),
 
   getManifest: (id: string) => request<string>(`/runs/${id}/manifest`),
 
-  listRuns: () => request<Run[]>('/runs'),
+  listRuns: () =>
+    request<Record<string, unknown>[]>('/runs').then(items => items.map(normalizeRun)),
 
   reloadPolicies: () =>
     request<{ status: string }>('/policies/reload', { method: 'POST' }),

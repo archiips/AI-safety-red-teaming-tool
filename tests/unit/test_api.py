@@ -193,6 +193,44 @@ def test_get_manifest_returns_404_when_not_generated():
     assert resp.status_code == 404
 
 
+def test_report_json_is_valid_and_complete():
+    """Report must include required keys; with no attacks it returns empty list."""
+    with patch("crucible.tasks.scan_task.run_scan_task") as mock_task:
+        mock_task.delay = MagicMock()
+        create_resp = client.post("/runs", json=_valid_run_body())
+    run_id = create_resp.json()["run_id"]
+
+    resp = client.get(f"/runs/{run_id}/report")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["run_id"] == run_id
+    assert "status" in data
+    assert "target_model" in data
+    assert "attacker_model" in data
+    assert "attacks" in data
+    assert isinstance(data["attacks"], list)
+    # manifest is None until run completes (no Celery in unit test)
+    assert "manifest" in data
+
+
+def test_list_runs_returns_array():
+    resp = client.get("/runs")
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
+
+
+def test_list_runs_includes_created_run():
+    with patch("crucible.tasks.scan_task.run_scan_task") as mock_task:
+        mock_task.delay = MagicMock()
+        create_resp = client.post("/runs", json=_valid_run_body())
+    run_id = create_resp.json()["run_id"]
+
+    resp = client.get("/runs")
+    assert resp.status_code == 200
+    ids = [r["run_id"] for r in resp.json()]
+    assert run_id in ids
+
+
 def test_policies_reload_returns_200():
     """Reload returns 200 when the C++ engine loads and reloads successfully."""
     mock_engine = MagicMock()
