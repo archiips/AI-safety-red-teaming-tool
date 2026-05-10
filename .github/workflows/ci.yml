@@ -283,14 +283,14 @@ jobs:
         run: |
           az containerapp update \
             --name crucible-api \
-            --resource-group crucible-rg \
+            --resource-group rg-crucible-dev \
             --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Verify deployment
         run: |
           APP_URL=$(az containerapp show \
             --name crucible-api \
-            --resource-group crucible-rg \
+            --resource-group rg-crucible-dev \
             --query "properties.configuration.ingress.fqdn" \
             --output tsv)
           echo "App deployed at: https://$APP_URL"
