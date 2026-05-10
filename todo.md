@@ -550,27 +550,30 @@
 
 ## PHASE 9 — Heatmap Polish & Report Export (Week 9–10)
 
-- [ ] **Task 9.1 — Heatmap Visual Polish**
-  - [ ] Refine color scale with proper CSS linear-gradient
-  - [ ] Add hover tooltips showing exact ASR + attack count
-  - [ ] Add a legend below the heatmap
-  - [ ] Add a "run diff" toggle — shows delta vs previous run in each cell
-  - [ ] Test with real scan data (not seeded)
+- [x] **Task 9.1 — Heatmap Visual Polish**
+  ✅ **Completed:** 2026-05-09 — React-state custom tooltip (replaces browser title); legend with 5 tick marks (0/25/50/75/100%); diff toggle button in panel header (▲▼ DIFF ON/OFF); showDiff prop gates delta rendering; HeatmapChart.tsx rewritten
+  - [x] Refine color scale with proper CSS linear-gradient
+  - [x] Add hover tooltips showing exact ASR + attack count
+  - [x] Add a legend below the heatmap
+  - [x] Add a "run diff" toggle — shows delta vs previous run in each cell
+  - [ ] Test with real scan data (not seeded) — requires live backend; deferred to Phase 11 benchmark runs
 
-- [ ] **Task 9.2 — JSON Report Export**
-  - [ ] Implement `GET /runs/{id}/report` endpoint:
-    - [ ] Returns JSON with: run metadata, all attacks, all scores, fusion results, κ values
-    - [ ] Include reproducibility manifest inline
-  - [ ] Write unit test: `test_report_json_is_valid_and_complete()`
-  - [ ] Add "Download Report" button in frontend
+- [x] **Task 9.2 — JSON Report Export**
+  ✅ **Completed:** 2026-05-09 — report endpoint now returns heatmap cells + manifest inline + kappa values per attack; GET /runs list endpoint added; "↓ REPORT" download button in panel header; frontend Run type normalized via client.ts wrapper
+  - [x] Implement `GET /runs/{id}/report` endpoint:
+    - [x] Returns JSON with: run metadata, all attacks, all scores, fusion results, κ values
+    - [x] Include reproducibility manifest inline
+  - [x] Write unit test: `test_report_json_is_valid_and_complete()`
+  - [x] Add "Download Report" button in frontend
 
-- [ ] **Task 9.3 — Reproducibility Manifest**
-  - [ ] Implement manifest generation in `crucible/manifests.py`:
-    - [ ] Capture: target model + version, attacker model + version, temperature, attack set version, scorer versions, seeds, num objectives, strategies
-    - [ ] Serialize to YAML
-    - [ ] Compute `manifest_hash` (SHA-256 of YAML content)
-  - [ ] Store manifest in DB on run completion
-  - [ ] Write unit test: `test_manifest_hash_changes_when_params_change()`
+- [x] **Task 9.3 — Reproducibility Manifest**
+  ✅ **Completed:** 2026-05-09 — crucible/manifests.py with generate_manifest(); SHA-256 hash of canonical YAML; scan_task.py calls generate_manifest on completion; 13 unit tests pass
+  - [x] Implement manifest generation in `crucible/manifests.py`:
+    - [x] Capture: target model + version, attacker model + version, temperature, attack set version, scorer versions, seeds, num objectives, strategies
+    - [x] Serialize to YAML
+    - [x] Compute `manifest_hash` (SHA-256 of YAML content)
+  - [x] Store manifest in DB on run completion
+  - [x] Write unit test: `test_manifest_hash_changes_when_params_change()`
 
 ---
 

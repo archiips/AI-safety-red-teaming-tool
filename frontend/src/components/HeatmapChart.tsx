@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react'
 import type { HeatmapCell, HarmCategory, AttackStrategy } from '../types'
 
 const CATEGORIES: HarmCategory[] = [
@@ -26,8 +27,20 @@ const CAT_LABELS: Record<HarmCategory, string> = {
   bioweapons: 'Bio',
 }
 
+const CAT_LABELS_FULL: Record<HarmCategory, string> = {
+  violence: 'Violence',
+  hate: 'Hate Speech',
+  sexual: 'Sexual Content',
+  self_harm: 'Self-Harm',
+  deception: 'Deception',
+  manipulation: 'Manipulation',
+  radicalization: 'Radicalization',
+  privacy: 'Privacy Violation',
+  cyberweapons: 'Cyberweapons',
+  bioweapons: 'Bioweapons',
+}
+
 function asrToColor(asr: number): string {
-  // 0 → deep navy, 0.5 → amber, 1.0 → red
   if (asr <= 0) return '#11141f'
   if (asr <= 0.5) {
     const t = asr / 0.5
@@ -47,14 +60,30 @@ function asrToTextColor(asr: number): string {
   return asr > 0.15 ? 'rgba(255,255,255,0.95)' : '#3d4260'
 }
 
+interface TooltipState {
+  cell: HeatmapCell
+  strategy: AttackStrategy
+  x: number
+  y: number
+}
+
 interface HeatmapChartProps {
   cells: HeatmapCell[]
   onCellClick: (cell: HeatmapCell) => void
   selectedCell?: HeatmapCell | null
   compareData?: HeatmapCell[]
+  showDiff?: boolean
 }
 
-export default function HeatmapChart({ cells, onCellClick, selectedCell, compareData }: HeatmapChartProps) {
+export default function HeatmapChart({
+  cells,
+  onCellClick,
+  selectedCell,
+  compareData,
+  showDiff = true,
+}: HeatmapChartProps) {
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null)
+
   function getCell(cat: HarmCategory, strat: AttackStrategy): HeatmapCell | undefined {
     return cells.find(c => c.category === cat && c.strategy === strat)
   }
@@ -65,8 +94,23 @@ export default function HeatmapChart({ cells, onCellClick, selectedCell, compare
 
   const maxAttacks = Math.max(...cells.map(c => c.attack_count), 1)
 
+  const handleMouseMove = useCallback((
+    e: React.MouseEvent,
+    cell: HeatmapCell,
+    strat: AttackStrategy,
+  ) => {
+    const rect = (e.currentTarget as HTMLElement).closest('.hm-grid-root')?.getBoundingClientRect()
+    if (!rect) return
+    setTooltip({
+      cell,
+      strategy: strat,
+      x: e.clientX - rect.left + 12,
+      y: e.clientY - rect.top - 8,
+    })
+  }, [])
+
   return (
-    <div style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+    <div className="hm-grid-root" style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", position: 'relative' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
 
@@ -112,13 +156,31 @@ export default function HeatmapChart({ cells, onCellClick, selectedCell, compare
           border-radius: 0 0 6px 0;
           transition: width 0.3s ease;
         }
+
+        .hm-tooltip {
+          position: absolute;
+          pointer-events: none;
+          z-index: 50;
+          background: #1a1d2e;
+          border: 1px solid #2e3347;
+          border-radius: 8px;
+          padding: 10px 12px;
+          min-width: 160px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+          font-size: 11px;
+          line-height: 1.6;
+        }
       `}</style>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `120px repeat(${STRATEGIES.length}, 1fr)`,
-        gap: 4,
-      }}>
+      <div
+        className="hm-grid-root"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `120px repeat(${STRATEGIES.length}, 1fr)`,
+          gap: 4,
+        }}
+        onMouseLeave={() => setTooltip(null)}
+      >
         {/* Header row */}
         <div />
         {STRATEGIES.map(s => (
@@ -157,14 +219,15 @@ export default function HeatmapChart({ cells, onCellClick, selectedCell, compare
               const bg = asrToColor(asr)
               const textColor = asrToTextColor(asr)
               const isSelected = selectedCell?.category === cat && selectedCell?.strategy === strat
-              const delta = cmp !== undefined ? asr - cmp.asr : null
+              const delta = showDiff && cmp !== undefined ? asr - cmp.asr : null
 
               return (
                 <div
                   key={`${cat}-${strat}`}
                   className={`hm-cell${isSelected ? ' selected' : ''}`}
                   style={{ background: bg, aspectRatio: '1.2' }}
-                  title={`${CAT_LABELS[cat]} × ${strat}: ASR ${(asr * 100).toFixed(1)}% (${cell?.attack_count ?? 0} attacks)`}
+                  onMouseMove={cell ? e => handleMouseMove(e, cell, strat) : undefined}
+                  onMouseLeave={() => setTooltip(null)}
                 >
                   <button
                     className="hm-cell-inner"
@@ -202,23 +265,65 @@ export default function HeatmapChart({ cells, onCellClick, selectedCell, compare
         ))}
       </div>
 
+      {/* Custom hover tooltip */}
+      {tooltip && (
+        <div
+          className="hm-tooltip"
+          style={{ left: tooltip.x, top: tooltip.y }}
+        >
+          <div style={{ fontWeight: 700, color: '#f1f3f9', marginBottom: 4, fontSize: 12 }}>
+            {CAT_LABELS_FULL[tooltip.cell.category as HarmCategory]} × {tooltip.strategy}
+          </div>
+          <div style={{ color: '#a5b4fc' }}>
+            ASR: <strong style={{ color: '#f1f3f9' }}>{(tooltip.cell.asr * 100).toFixed(1)}%</strong>
+          </div>
+          <div style={{ color: '#6b7280' }}>
+            Attacks: <strong style={{ color: '#9ca3af' }}>{tooltip.cell.attack_count}</strong>
+          </div>
+          {tooltip.cell.asr > 0 && (
+            <div style={{ color: '#6b7280' }}>
+              Hits: <strong style={{ color: '#9ca3af' }}>
+                {Math.round(tooltip.cell.asr * tooltip.cell.attack_count)}
+              </strong>
+            </div>
+          )}
+          <div style={{
+            marginTop: 6, paddingTop: 6,
+            borderTop: '1px solid #2e3347',
+            fontSize: 9, color: '#374151', letterSpacing: 0.5,
+          }}>
+            CLICK TO DRILL DOWN
+          </div>
+        </div>
+      )}
+
       {/* Legend */}
       <div style={{
-        marginTop: 16,
+        marginTop: 20,
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 12,
         justifyContent: 'center',
       }}>
-        <span style={{ fontSize: 9, color: '#2e3347', letterSpacing: 1, textTransform: 'uppercase' }}>
-          ASR
+        <span style={{ fontSize: 9, color: '#374151', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+          Attack Success Rate
         </span>
-        <div style={{
-          width: 160, height: 6, borderRadius: 4,
-          background: 'linear-gradient(90deg, #11141f, #f59e0b, #ef4444)',
-        }} />
-        <div style={{ display: 'flex', gap: 20, fontSize: 9, color: '#4b5280' }}>
-          <span>0%</span><span>50%</span><span>100%</span>
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            width: 180, height: 8, borderRadius: 4,
+            background: 'linear-gradient(90deg, #11141f 0%, #f59e0b 50%, #ef4444 100%)',
+          }} />
+          {/* Tick marks */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            marginTop: 4, fontSize: 9, color: '#4b5280',
+          }}>
+            <span>0%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
         </div>
       </div>
     </div>

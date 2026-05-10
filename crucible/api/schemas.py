@@ -72,6 +72,25 @@ class AttackResult(BaseModel):
     azure_cs_score: Optional[float]
     llm_judge_score: Optional[float]
     matched_rules: list[str]
+    kappa_cpp_azure: Optional[float] = None
+    kappa_cpp_judge: Optional[float] = None
+    kappa_azure_judge: Optional[float] = None
+
+
+class ManifestSummary(BaseModel):
+    manifest_hash: str
+    manifest_yaml: str
+    target_model_version: Optional[str] = None
+    attacker_model_version: Optional[str] = None
+    attack_set_version: Optional[str] = None
+    scorer_versions: dict[str, Any] = {}
+
+
+class HeatmapCellResponse(BaseModel):
+    category: str
+    strategy: str
+    asr: float
+    attack_count: int
 
 
 class RunReportResponse(BaseModel):
@@ -81,6 +100,8 @@ class RunReportResponse(BaseModel):
     attacker_model: str
     asr: Optional[float]
     attacks: list[AttackResult]
+    heatmap: list[HeatmapCellResponse] = []
+    manifest: Optional[ManifestSummary] = None
 
 
 class PolicyReloadResponse(BaseModel):

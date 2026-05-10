@@ -271,51 +271,13 @@ def test_manifest_yaml_is_valid_and_complete(task_session):
     """
     GET /runs/{id}/manifest returns parseable YAML with all required fields.
 
-    Since manifest generation is implemented in Phase 9, this test seeds the
-    Manifest row directly (matching what Phase 9 will produce) and validates
-    the endpoint + YAML schema.
+    Phase 9 implemented automatic manifest generation in the scan task, so
+    this test just runs the pipeline and validates the auto-generated manifest.
     """
     run_id = _create_run_via_api(categories=["violence"], strategies=["easy"], num_objectives=1)
     _run_task_synchronously(run_id, task_session)
 
-    # Seed the manifest row (Phase 9 will generate this automatically on run completion)
-    manifest_data = {
-        "target_model": "phi4-mini",
-        "target_model_version": "phi4-mini:latest",
-        "attacker_model": "phi4-mini",
-        "attacker_model_version": "phi4-mini:latest",
-        "temperature": 0.7,
-        "attack_set_version": "crucible-builtin-v1",
-        "scorer_versions": {
-            "cpp_engine": "1.0.0",
-            "azure_cs": "azure-ai-contentsafety-1.0.0",
-            "llm_judge": "phi4-mini",
-        },
-        "seed": 42,
-        "num_objectives": 1,
-        "strategies": ["easy"],
-        "categories": ["violence"],
-    }
-    manifest_yaml = yaml.dump(manifest_data, default_flow_style=False)
-    manifest_hash = hashlib.sha256(manifest_yaml.encode()).hexdigest()
-
-    db = _Session()
-    try:
-        manifest = Manifest(
-            run_id=run_id,
-            manifest_yaml=manifest_yaml,
-            manifest_hash=manifest_hash,
-            target_model_version="phi4-mini:latest",
-            attacker_model_version="phi4-mini:latest",
-            attack_set_version="crucible-builtin-v1",
-            scorer_versions=json.dumps(manifest_data["scorer_versions"]),
-        )
-        db.add(manifest)
-        db.commit()
-    finally:
-        db.close()
-
-    # Fetch via API
+    # Manifest is now generated automatically by the scan task on completion
     resp = client.get(f"/runs/{run_id}/manifest")
     assert resp.status_code == 200, resp.text
     payload = resp.json()

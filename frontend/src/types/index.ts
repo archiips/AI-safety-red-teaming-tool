@@ -71,9 +71,22 @@ export interface HeatmapCell {
   attacks: Attack[]
 }
 
+export interface ManifestSummary {
+  manifest_hash: string
+  manifest_yaml: string
+  target_model_version: string | null
+  attacker_model_version: string | null
+  attack_set_version: string | null
+  scorer_versions: Record<string, string>
+}
+
 export interface RunReport {
-  run: Run
+  run_id: string
+  status: RunStatus
+  target_model: string
+  attacker_model: string
+  asr: number | null
   attacks: Attack[]
   heatmap: HeatmapCell[]
-  manifest: Record<string, unknown>
+  manifest: ManifestSummary | null
 }
