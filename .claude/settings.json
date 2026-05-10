@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PROJECT='/Users/architjaiswal/main/PROJECTS/AI Safety red teaming app'; STATUS=$(git -C \"$PROJECT\" status --short 2>/dev/null); BRANCH=$(git -C \"$PROJECT\" branch --show-current 2>/dev/null); [ -n \"$STATUS\" ] && jq -n --arg s \"$STATUS\" --arg b \"$BRANCH\" '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":(\"Uncommitted changes on branch \\u2018\" + $b + \"\\u2019:\\n\" + $s + \"\\n\\nWorkflow: tell the user what to test. When they confirm tests pass, stage relevant files, commit with a descriptive message, and push to origin/\" + $b + \".\")}}' || true",
+            "command": "PROJECT='/Users/architjaiswal/main/PROJECTS/AI Safety red teaming app'; STATUS=$(git -C \"$PROJECT\" status --short 2>/dev/null); BRANCH=$(git -C \"$PROJECT\" branch --show-current 2>/dev/null); [ -n \"$STATUS\" ] && jq -n --arg s \"$STATUS\" --arg b \"$BRANCH\" '{\"stopReason\":(\"Uncommitted changes on branch \\u2018\" + $b + \"\\u2019:\\n\" + $s + \"\\n\\nWorkflow: tell the user what to test. When they confirm tests pass, stage relevant files, commit with a descriptive message, and push to origin/\" + $b + \".\")}' || true",
             "timeout": 5
           }
         ]

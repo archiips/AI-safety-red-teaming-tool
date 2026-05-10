@@ -1,0 +1,91 @@
+# ── Stage 1: C++ Build ────────────────────────────────────────────────────────
+FROM python:3.11-slim AS cpp-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    build-essential \
+    libre2-dev \
+    libicu-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir pybind11
+
+WORKDIR /build/cpp
+COPY cpp/ .
+
+RUN mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -Dpybind11_DIR=$(python3 -m pybind11 --cmakedir) && \
+    cmake --build . --config Release && \
+    mkdir -p /output && \
+    find /build -maxdepth 1 -name "crucible_policy*.so" -exec cp {} /output/ \;
+
+# ── Stage 2: Python Dependency Build ─────────────────────────────────────────
+FROM python:3.11-slim AS python-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    rustc \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/base.txt requirements/pinned.txt requirements/
+RUN pip install --no-cache-dir --prefix=/install \
+    -r requirements/base.txt \
+    -r requirements/pinned.txt
+
+# ── Stage 3: Frontend Build ───────────────────────────────────────────────────
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci --ignore-scripts
+COPY frontend/ .
+RUN npm run build
+
+# ── Stage 4: Production Runtime ──────────────────────────────────────────────
+FROM python:3.11-slim
+
+LABEL org.opencontainers.image.title="Crucible API"
+LABEL org.opencontainers.image.description="AI Safety Red-Teaming Platform"
+LABEL org.opencontainers.image.source="https://github.com/crucible-ai/crucible"
+
+# Runtime shared libraries needed by the C++ module
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libre2-11 \
+    libicu76 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for production security
+RUN groupadd -r crucible && useradd -r -g crucible -d /app crucible
+
+WORKDIR /app
+
+# Python packages from build stage (no Rust toolchain in final image)
+COPY --from=python-builder /install /usr/local
+
+# C++ extension module from build stage
+COPY --from=cpp-builder /output/ ./
+
+# Built frontend static assets (served by FastAPI StaticFiles)
+COPY --from=frontend-builder /frontend/dist ./frontend/dist
+
+# Application source — only what's needed at runtime
+COPY crucible/ ./crucible/
+COPY data/ ./data/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+
+# Switch to non-root user
+RUN chown -R crucible:crucible /app
+USER crucible
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run migrations then start production server (no --reload in prod)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn crucible.api.main:app --host 0.0.0.0 --port 8000 --workers 2"]
