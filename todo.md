@@ -580,36 +580,35 @@
 ## PHASE 10 — CI/CD & Deployment (Week 10)
 
 - [ ] **Task 10.1 — GitHub Actions Pipeline**
-  - [ ] Create `.github/workflows/ci.yml`:
-    - [ ] Job 1: `cpp-build-test`
-      - [ ] Install CMake, RE2, pybind11
-      - [ ] cmake build
-      - [ ] ctest
-      - [ ] `pytest tests/unit/test_policy_engine.py tests/performance/`
-    - [ ] Job 2: `python-test`
-      - [ ] `pip install -r requirements/pinned.txt -r requirements/dev.txt`
-      - [ ] `pytest tests/unit/ tests/contracts/ --cov=crucible --cov-report=xml`
-      - [ ] Upload coverage to Codecov
-    - [ ] Job 3: `nightly-scan` (only on schedule cron)
-      - [ ] Full e2e scan against Phi-4-mini via Ollama
-      - [ ] `crucible compare --baseline main --head HEAD --fail-on-regression 0.05`
-  - [ ] Add branch protection rule: `ci.yml` must pass before merge
+  ⚠️ **Partially Completed:** 2026-05-10
+  - [x] Create `.github/workflows/ci.yml`:
+    - [x] Job 1: `cpp-build-test`
+      - [x] Install CMake, RE2, pybind11
+      - [x] cmake build
+      - [x] ctest
+      - [x] `pytest tests/unit/test_policy_engine.py tests/performance/`
+    - [x] Job 2: `python-test`
+      - [x] `pip install -r requirements/pinned.txt -r requirements/dev.txt`
+      - [x] `pytest tests/unit/ tests/contracts/ --cov=crucible --cov-report=xml`
+      - [x] Upload coverage to Codecov
+    - [x] Job 3: `nightly-scan` (only on schedule cron)
+      - [x] Full e2e scan against Phi-4-mini via Ollama
+      - [x] regression check via performance tests (crucible compare CLI not yet built)
+  - [ ] Add branch protection rule: `ci.yml` must pass before merge — blocked: PAT needs `workflow` scope to push; re-generate token then push branch to trigger CI
   - [ ] Verify CI passes on a test PR
 
 - [ ] **Task 10.2 — Azure Container Apps Deployment**
-  - [ ] Create `Dockerfile.prod` — multi-stage, production-optimized
-  - [ ] Create Azure Container Registry resource
-  - [ ] Set up OIDC federation between GitHub Actions and Azure (no static credentials):
-    ```yaml
-    - uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-    ```
-  - [ ] Create Azure Container App for the API
-  - [ ] Add deploy job to `ci.yml` (only on push to `main`)
-  - [ ] Verify deployment: `curl https://<your-app>.azurecontainerapps.io/health`
+  ⚠️ **Partially Completed:** 2026-05-10
+  - [x] Create `Dockerfile.prod` — multi-stage, production-optimized (4 stages: cpp-builder, python-builder, frontend-builder, runtime)
+  - [x] Create Azure Container Registry resource — `crucibleacr.azurecr.io` (Basic SKU, rg-crucible-dev)
+  - [x] Set up OIDC federation between GitHub Actions and Azure (no static credentials):
+    - [x] App registration `crucible-github-actions` (appId: 975b0227)
+    - [x] Service principal created with Contributor (rg) + AcrPush (ACR) roles
+    - [x] Federated credentials for main branch push and pull_request events
+    - [x] GitHub secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, ACR_LOGIN_SERVER, ACR_NAME
+  - [x] Create Azure Container App for the API — `crucible-api` in `crucible-env` (East US 2)
+  - [x] Add deploy job to `ci.yml` (only on push to `main`)
+  - [ ] Verify deployment: `curl https://crucible-api.politesea-8d7204f3.eastus2.azurecontainerapps.io/health` — blocked: push requires PAT `workflow` scope
 
 ---
 
