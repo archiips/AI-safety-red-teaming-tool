@@ -34,11 +34,11 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          mkdir -p build && cd build
-          cmake .. \
+          mkdir -p build
+          cmake -S cpp -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -Dpybind11_DIR=$(python3 -m pybind11 --cmakedir)
-          cmake --build . --config Release
+          cmake --build build --config Release
 
       - name: Copy .so to project root (matches dev layout)
         run: |
@@ -104,12 +104,11 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          mkdir -p build && cd build
-          cmake .. \
+          mkdir -p build
+          cmake -S cpp -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -Dpybind11_DIR=$(python3 -m pybind11 --cmakedir)
-          cmake --build . --config Release
-          find /home/runner/work -maxdepth 6 -name "crucible_policy*.so" | head -5
+          cmake --build build --config Release
 
       - name: Copy .so to project root
         run: |
@@ -185,11 +184,11 @@ jobs:
       - name: Install pybind11 and build C++ extension
         run: |
           pip install pybind11
-          mkdir -p build && cd build
-          cmake .. \
+          mkdir -p build
+          cmake -S cpp -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -Dpybind11_DIR=$(python3 -m pybind11 --cmakedir)
-          cmake --build . --config Release
+          cmake --build build --config Release
 
       - name: Copy .so to project root
         run: |
