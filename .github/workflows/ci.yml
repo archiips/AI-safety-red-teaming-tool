@@ -237,8 +237,8 @@ jobs:
       - name: Run E2E scan pipeline
         run: pytest tests/e2e/ -v -s --timeout=180
 
-      - name: Run regression check
-        run: pytest tests/performance/ -v -s --timeout=60
+      # Regression comparison (crucible compare CLI) is a Phase 11 deliverable.
+      # Performance benchmarks require 8+ cores and are not run in CI.
 
   # ── Job 4: Deploy to Azure Container Apps (push to main only) ────────────────
   deploy:
