@@ -504,20 +504,21 @@
 
 ## PHASE 7 — Docker & Local Dev (Week 8)
 
-- [ ] **Task 7.1 — Docker Compose for Full Local Stack**
-  - [ ] Update `docker-compose.yml`:
-    - [ ] `redis` service (already done in Task 5.2)
-    - [ ] `api` service: FastAPI app
-    - [ ] `worker` service: Celery worker
-    - [ ] `frontend` service: Vite dev server
-    - [ ] All services use `.env` file for config
-  - [ ] Write multi-stage `Dockerfile` for the API + worker:
-    - [ ] Stage 1: C++ build (CMake + pybind11)
-    - [ ] Stage 2: Python app with copied `.so` file
-  - [ ] Verify full stack starts with: `docker-compose up`
-  - [ ] Verify frontend is reachable at `http://localhost:5173`
+- [x] **Task 7.1 — Docker Compose for Full Local Stack**
+  ✅ **Completed:** 2026-05-09 — 3-stage Dockerfile (C++ build, Python dep build with Rust for base2048, slim runtime); all 4 services healthy; API health 200, frontend 200, Celery worker ready; fastapi bumped to >=0.115.0 to satisfy pyrit; missing Linux headers added to severity.cpp and aho_corasick.hpp
+  - [x] Update `docker-compose.yml`:
+    - [x] `redis` service (already done in Task 5.2)
+    - [x] `api` service: FastAPI app
+    - [x] `worker` service: Celery worker
+    - [x] `frontend` service: Vite dev server
+    - [x] All services use `.env` file for config
+  - [x] Write multi-stage `Dockerfile` for the API + worker:
+    - [x] Stage 1: C++ build (CMake + pybind11)
+    - [x] Stage 2: Python app with copied `.so` file
+  - [x] Verify full stack starts with: `docker-compose up`
+  - [x] Verify frontend is reachable at `http://localhost:5173`
   - [ ] Verify a scan can be triggered through the UI end-to-end
-  - [ ] Write `scripts/demo.sh` — one-command demo that starts everything and runs a quick scan
+  - [x] Write `scripts/demo.sh` — one-command demo that starts everything and runs a quick scan
 
 ---
 

@@ -1,4 +1,5 @@
-version: "3.9"
+volumes:
+  db_data:        # persists SQLite database across container restarts
 
 services:
   redis:
@@ -15,15 +16,27 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn crucible.api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn crucible.api.main:app --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite:////data/crucible.db
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - .:/app
+      # Mount only Python source for --reload hot-reloading.
+      # The C++ .so is compiled for Linux inside the image — never overwrite it
+      # with the host macOS .so via a full-project mount.
+      - ./crucible:/app/crucible
+      - ./data:/app/data
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+      - db_data:/data
 
   worker:
     build:
@@ -31,11 +44,16 @@ services:
       dockerfile: Dockerfile
     command: celery -A crucible.worker.celery_app worker --loglevel=info
     env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite:////data/crucible.db
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - .:/app
+      - ./crucible:/app/crucible
+      - ./data:/app/data
+      - db_data:/data
 
   frontend:
     build:
@@ -43,6 +61,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
+    environment:
+      # Proxy target uses Docker service name, not localhost
+      - VITE_API_HOST=http://api:8000
+    depends_on:
+      - api
     volumes:
-      - ./frontend:/app
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      # Prevent host node_modules from overwriting the image's node_modules
       - /app/node_modules

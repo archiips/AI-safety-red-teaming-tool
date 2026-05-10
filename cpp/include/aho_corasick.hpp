@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>

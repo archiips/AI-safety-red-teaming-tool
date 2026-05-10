@@ -7,8 +7,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find pybind11
 find_package(pybind11 REQUIRED)
 
-# Find RE2
-find_package(re2 REQUIRED)
+# Find RE2 — prefer CMake config (Homebrew/vcpkg), fall back to pkg-config (Debian)
+find_package(re2 QUIET)
+if(NOT re2_FOUND)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(RE2 REQUIRED re2)
+    add_library(re2::re2 INTERFACE IMPORTED)
+    target_include_directories(re2::re2 INTERFACE ${RE2_INCLUDE_DIRS})
+    target_link_libraries(re2::re2 INTERFACE ${RE2_LINK_LIBRARIES})
+endif()
 
 # Find ICU for unicode normalization
 find_package(ICU COMPONENTS uc i18n QUIET)

@@ -9,6 +9,8 @@
 #include <cctype>
 #include <cmath>
 #include <filesystem>
+#include <mutex>
+#include <shared_mutex>
 
 // ---------- Minimal JSON helpers ----------
 
