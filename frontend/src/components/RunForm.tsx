@@ -347,7 +347,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           {/* Categories */}
           <div>
             <SectionLabel count={`${categories.size} / 10`}>Harm Categories</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5, marginBottom: 8 }}>
               {ALL_CATEGORIES.map(({ id, label }) => (
                 <button
                   key={id}
