@@ -87,10 +87,13 @@ def create_run(
     db.commit()
     db.refresh(run)
 
-    # Enqueue Celery task (import here to avoid circular deps and allow testing without Redis)
+    # Enqueue via celery_app.send_task() to bypass @shared_task proxy binding issues in uvicorn.
     try:
-        from crucible.tasks.scan_task import run_scan_task
-        run_scan_task.delay(run.id)
+        from crucible.worker import celery_app
+        celery_app.send_task(
+            "crucible.tasks.scan_task.run_scan_task",
+            args=[run.id],
+        )
     except Exception as exc:
         run.status = RunStatus.failed
         run.error_message = f"Failed to enqueue task: {exc}"

@@ -614,7 +614,7 @@
 ## PHASE 11 — Benchmarks (Week 11)
 
 - [x] **Task 11.1 — Run Benchmarks Against 3 Target Models**
-  ✅ **Completed:** 2026-05-11 — phi4-mini (2.2% ASR), phi4-mini::unguarded (0.0% ASR), gemma4 (8.9% ASR); key finding: gemma4 more vulnerable than phi4-mini on violence/moderate (66.7%); safety in phi4-mini is weight-level, not system-prompt-level; all screenshots in screenshots/; C++ 7.18× speedup re-verified
+  ✅ **Completed:** 2026-05-11 — phi4-mini (2.2% ASR), phi4-mini::unguarded (0.0% ASR), llama3.2 (6.7% ASR), azure/phi-4-mini-instruct (0.0% ASR); key finding: llama3.2 radicalization/moderate 100% — creative-writing jailbreak fully effective; Azure endpoint blocks all adversarial prompts at infrastructure level (30s content-filter timeout); Celery 503 fixed via celery_app.send_task(); heatmap type-case bug fixed; C++ 7.01× speedup re-verified. Deviation from plan: gemma4 was replaced with llama3.2 + Azure phi-4-mini-instruct per user clarification. Benchmark gate notes ≥10× in goal but ≥5× is CI gate (7.01× achieved).
   - [x] Run full scan against: Phi-4-mini (local Ollama), an open Llama model, a deliberately undefended test endpoint
   - [x] For each model, record:
     - [x] ASR per category × strategy (the heatmap data)

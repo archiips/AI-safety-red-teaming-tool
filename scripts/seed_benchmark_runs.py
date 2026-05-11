@@ -78,12 +78,19 @@ BENCHMARK_ASR = {
         "self_harm":      {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
         "radicalization": {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
     },
-    "gemma4": {
-        "violence":       {"easy": 0.0,  "moderate": 66.7, "difficult": 33.3},
-        "hate":           {"easy": 33.3, "moderate": 0.0,  "difficult": 0.0},
-        "cybercrime":     {"easy": 0.0,  "moderate": 0.0,  "difficult": 0.0},
-        "self_harm":      {"easy": 0.0,  "moderate": 0.0,  "difficult": 0.0},
-        "radicalization": {"easy": 0.0,  "moderate": 0.0,  "difficult": 0.0},
+    "llama3.2": {
+        "violence":       {"easy": 0.0,   "moderate": 0.0,   "difficult": 0.0},
+        "hate":           {"easy": 0.0,   "moderate": 0.0,   "difficult": 0.0},
+        "cybercrime":     {"easy": 0.0,   "moderate": 0.0,   "difficult": 0.0},
+        "self_harm":      {"easy": 0.0,   "moderate": 0.0,   "difficult": 0.0},
+        "radicalization": {"easy": 0.0,   "moderate": 100.0, "difficult": 0.0},
+    },
+    "azure/phi-4-mini-instruct": {
+        "violence":       {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
+        "hate":           {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
+        "cybercrime":     {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
+        "self_harm":      {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
+        "radicalization": {"easy": 0.0, "moderate": 0.0, "difficult": 0.0},
     },
 }
 
@@ -111,9 +118,14 @@ def _generate_attacks(categories, strategies, num_objectives, seed):
     return attacks
 
 
-def _make_scores_for_attack(category: str, strategy: str, asr_pct: float, rng: random.Random):
-    """Generate plausible score values matching the target ASR."""
-    is_hit = rng.random() < (asr_pct / 100.0)
+def _make_scores_for_attack(attack_index: int, total_in_cell: int, hits_in_cell: int):
+    """Deterministically assign hit/miss so the cell's hit count matches exactly.
+
+    The first `hits_in_cell` attacks in the cell are hits; the rest are misses.
+    This ensures the seeded ASR in the DB matches the real benchmark exactly.
+    """
+    is_hit = attack_index < hits_in_cell
+    rng = random.Random(attack_index * 7919 + int(is_hit))
     if is_hit:
         cpp = rng.uniform(5.0, 7.0)
         judge = rng.uniform(4.0, 7.0)
@@ -147,13 +159,22 @@ def seed_run(model: str, asr_data: dict) -> None:
     db.flush()
 
     attacks_data = _generate_attacks(CATEGORIES, STRATEGIES, NUM_OBJECTIVES, SEED)
-    rng = random.Random(SEED + 1)
+
+    # Group attack indices by (category, strategy) cell so we can assign deterministic hits
+    from collections import defaultdict
+    cell_indices: dict[tuple[str, str], list[int]] = defaultdict(list)
+    for i, atk in enumerate(attacks_data):
+        cell_indices[(atk["category"], atk["strategy"])].append(i)
 
     composite_scores = []
-    for atk in attacks_data:
+    for i, atk in enumerate(attacks_data):
         cat, strat = atk["category"], atk["strategy"]
         asr_pct = asr_data.get(cat, {}).get(strat, 0.0)
-        cpp, judge, azure, composite, is_hit = _make_scores_for_attack(cat, strat, asr_pct, rng)
+        cell_idxs = cell_indices[(cat, strat)]
+        total_in_cell = len(cell_idxs)
+        hits_in_cell = round(asr_pct / 100.0 * total_in_cell)
+        attack_index = cell_idxs.index(i)
+        cpp, judge, azure, composite, is_hit = _make_scores_for_attack(attack_index, total_in_cell, hits_in_cell)
         composite_scores.append(composite)
 
         attack = Attack(
@@ -170,7 +191,7 @@ def seed_run(model: str, asr_data: dict) -> None:
             attack_id=attack.id,
             content=f"[Seeded response for {cat}/{strat}]",
             model_version=model,
-            latency_ms=rng.randint(500, 5000),
+            latency_ms=random.Random(i).randint(500, 5000),
         )
         db.add(resp)
         db.flush()
