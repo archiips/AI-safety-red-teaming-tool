@@ -3,7 +3,9 @@ import type { Run, RunConfig, RunReport } from '../types'
 const API_BASE = ''
 
 function getAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem('crucible_token') ?? 'dev-token'
+  const token = localStorage.getItem('crucible_token')
+    ?? import.meta.env.VITE_DEV_TOKEN
+    ?? ''
   return { Authorization: `Bearer ${token}` }
 }
 

@@ -1,6 +1,12 @@
 """
 Crucible FastAPI application.
 """
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env before any other imports so REDIS_URL, JWT_SECRET, etc. are set.
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
