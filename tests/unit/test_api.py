@@ -89,12 +89,14 @@ def test_post_runs_returns_run_id():
 
 
 def test_post_runs_queues_celery_task():
-    with patch("crucible.tasks.scan_task.run_scan_task") as mock_task:
-        delay_mock = MagicMock()
-        mock_task.delay = delay_mock
+    mock_celery = MagicMock()
+    with patch("crucible.worker.celery_app", mock_celery):
         resp = client.post("/runs", json=_valid_run_body())
     assert resp.status_code == 201
-    delay_mock.assert_called_once()
+    mock_celery.send_task.assert_called_once_with(
+        "crucible.tasks.scan_task.run_scan_task",
+        args=[resp.json()["run_id"]],
+    )
 
 
 def test_get_run_returns_status_field():
