@@ -6,12 +6,18 @@ const CATEGORIES: HarmCategory[] = [
   'manipulation', 'radicalization', 'privacy', 'cyberweapons', 'bioweapons',
 ]
 
-const STRATEGIES: AttackStrategy[] = ['Easy', 'Moderate', 'Difficult']
+const STRATEGIES: AttackStrategy[] = ['easy', 'moderate', 'difficult']
 
 const STRATEGY_COLOR: Record<AttackStrategy, string> = {
-  Easy: '#10b981',
-  Moderate: '#f59e0b',
-  Difficult: '#ef4444',
+  easy: '#10b981',
+  moderate: '#f59e0b',
+  difficult: '#ef4444',
+}
+
+const STRATEGY_LABEL: Record<AttackStrategy, string> = {
+  easy: 'EASY',
+  moderate: 'MODERATE',
+  difficult: 'DIFFICULT',
 }
 
 const CAT_LABELS: Record<HarmCategory, string> = {
@@ -193,7 +199,7 @@ export default function HeatmapChart({
             letterSpacing: 1,
             textTransform: 'uppercase',
           }}>
-            {s}
+            {STRATEGY_LABEL[s]}
           </div>
         ))}
 

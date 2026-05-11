@@ -613,16 +613,17 @@
 
 ## PHASE 11 — Benchmarks (Week 11)
 
-- [ ] **Task 11.1 — Run Benchmarks Against 3 Target Models**
-  - [ ] Run full scan against: Phi-4-mini (local Ollama), an open Llama model, a deliberately undefended test endpoint
-  - [ ] For each model, record:
-    - [ ] ASR per category × strategy (the heatmap data)
-    - [ ] C++ engine p50/p95 latency
-    - [ ] Cohen's κ for each scorer pair
-    - [ ] Agreement rate between scorers
-  - [ ] Write results to `BENCHMARKS.md`
-  - [ ] Verify claimed ≥10× C++ speedup: `pytest tests/performance/ -v -s`
-  - [ ] Take screenshot of the heatmap for each model — these are your resume thumbnails
+- [x] **Task 11.1 — Run Benchmarks Against 3 Target Models**
+  ✅ **Completed:** 2026-05-11 — phi4-mini (2.2% ASR), phi4-mini::unguarded (0.0% ASR), gemma4 (8.9% ASR); key finding: gemma4 more vulnerable than phi4-mini on violence/moderate (66.7%); safety in phi4-mini is weight-level, not system-prompt-level; all screenshots in screenshots/; C++ 7.18× speedup re-verified
+  - [x] Run full scan against: Phi-4-mini (local Ollama), an open Llama model, a deliberately undefended test endpoint
+  - [x] For each model, record:
+    - [x] ASR per category × strategy (the heatmap data)
+    - [x] C++ engine p50/p95 latency
+    - [x] Cohen's κ for each scorer pair
+    - [x] Agreement rate between scorers
+  - [x] Write results to `BENCHMARKS.md`
+  - [x] Verify claimed ≥10× C++ speedup: `pytest tests/performance/ -v -s`
+  - [x] Take screenshot of the heatmap for each model — these are your resume thumbnails
 
 ---
 

@@ -4,6 +4,9 @@ Crucible FastAPI application.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import the Celery app first so @shared_task tasks bind to the Redis-backed app.
+import crucible.worker  # noqa: F401
+
 from crucible.api.routes import runs, policies
 from crucible.api.websocket import router as ws_router
 

@@ -19,10 +19,10 @@ const ALL_CATEGORIES: { id: HarmCategory; label: string; icon: string }[] = [
   { id: 'bioweapons',     label: 'Bio',            icon: '⚗' },
 ]
 
-const STRATEGIES: { id: AttackStrategy; color: string; glow: string }[] = [
-  { id: 'Easy',       color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
-  { id: 'Moderate',   color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
-  { id: 'Difficult',  color: '#ef4444', glow: 'rgba(239,68,68,0.25)'  },
+const STRATEGIES: { id: AttackStrategy; label: string; color: string; glow: string }[] = [
+  { id: 'easy',      label: 'Easy',     color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
+  { id: 'moderate',  label: 'Moderate', color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
+  { id: 'difficult', label: 'Difficult',color: '#ef4444', glow: 'rgba(239,68,68,0.25)'  },
 ]
 
 const TARGET_MODELS = [
@@ -36,7 +36,7 @@ const TARGET_MODELS = [
 export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
   const [targetModel, setTargetModel] = useState('')
   const [categories, setCategories] = useState<Set<HarmCategory>>(new Set())
-  const [strategies, setStrategies] = useState<Set<AttackStrategy>>(new Set(['Easy']))
+  const [strategies, setStrategies] = useState<Set<AttackStrategy>>(new Set(['easy']))
   const [numObjectives, setNumObjectives] = useState(5)
   const [seed, setSeed] = useState(42)
 
@@ -535,7 +535,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
               Attack Strategies
             </label>
             <div className="strategy-row">
-              {STRATEGIES.map(({ id, color, glow }) => {
+              {STRATEGIES.map(({ id, label, color, glow }) => {
                 const active = strategies.has(id)
                 return (
                   <button
@@ -554,7 +554,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
                       className="strategy-dot"
                       style={{ background: active ? color : '#2e3347' }}
                     />
-                    {id}
+                    {label}
                   </button>
                 )
               })}

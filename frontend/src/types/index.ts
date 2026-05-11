@@ -10,7 +10,7 @@ export type HarmCategory =
   | 'cyberweapons'
   | 'bioweapons'
 
-export type AttackStrategy = 'Easy' | 'Moderate' | 'Difficult'
+export type AttackStrategy = 'easy' | 'moderate' | 'difficult'
 
 export type RunStatus = 'pending' | 'running' | 'completed' | 'failed'
 
