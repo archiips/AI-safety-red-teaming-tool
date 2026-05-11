@@ -9,9 +9,9 @@ const CATEGORIES: HarmCategory[] = [
 const STRATEGIES: AttackStrategy[] = ['easy', 'moderate', 'difficult']
 
 const STRATEGY_COLOR: Record<AttackStrategy, string> = {
-  easy: '#10b981',
-  moderate: '#f59e0b',
-  difficult: '#ef4444',
+  easy: '#4A9060',
+  moderate: '#B8860B',
+  difficult: '#B03020',
 }
 
 const STRATEGY_LABEL: Record<AttackStrategy, string> = {
@@ -46,24 +46,25 @@ const CAT_LABELS_FULL: Record<HarmCategory, string> = {
   bioweapons: 'Bioweapons',
 }
 
+// Warm dark → muted amber → muted red
 function asrToColor(asr: number): string {
-  if (asr <= 0) return '#11141f'
+  if (asr <= 0) return '#2A2A2A'
   if (asr <= 0.5) {
     const t = asr / 0.5
-    const r = Math.round(17 + t * (245 - 17))
-    const g = Math.round(20 + t * (158 - 20))
-    const b = Math.round(31 + t * (11 - 31))
+    const r = Math.round(42 + t * (184 - 42))
+    const g = Math.round(42 + t * (100 - 42))
+    const b = Math.round(42 + t * (11 - 42))
     return `rgb(${r},${g},${b})`
   }
   const t = (asr - 0.5) / 0.5
-  const r = Math.round(245 + t * (239 - 245))
-  const g = Math.round(158 + t * (68 - 158))
-  const b = Math.round(11 + t * (68 - 11))
+  const r = Math.round(184 + t * (176 - 184))
+  const g = Math.round(100 + t * (32 - 100))
+  const b = Math.round(11 + t * (20 - 11))
   return `rgb(${r},${g},${b})`
 }
 
 function asrToTextColor(asr: number): string {
-  return asr > 0.15 ? 'rgba(255,255,255,0.95)' : '#3d4260'
+  return asr > 0.12 ? 'rgba(255,255,255,0.92)' : '#666'
 }
 
 interface TooltipState {
@@ -116,13 +117,11 @@ export default function HeatmapChart({
   }, [])
 
   return (
-    <div className="hm-grid-root" style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", position: 'relative' }}>
+    <div className="hm-grid-root" style={{ fontFamily: "'Space Mono', monospace", position: 'relative' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
-
         .hm-cell {
-          border-radius: 6px;
-          transition: transform 0.15s, box-shadow 0.15s;
+          border-radius: 5px;
+          transition: transform 0.12s;
           cursor: pointer;
           position: relative;
           overflow: hidden;
@@ -134,7 +133,7 @@ export default function HeatmapChart({
         }
 
         .hm-cell.selected {
-          box-shadow: 0 0 0 2px #6366f1, 0 0 20px rgba(99,102,241,0.4);
+          box-shadow: 0 0 0 2px #C0392B;
           z-index: 3;
         }
 
@@ -157,9 +156,9 @@ export default function HeatmapChart({
           position: absolute;
           bottom: 0;
           left: 0;
-          height: 3px;
-          background: rgba(255,255,255,0.2);
-          border-radius: 0 0 6px 0;
+          height: 2px;
+          background: rgba(255,255,255,0.15);
+          border-radius: 0 0 5px 0;
           transition: width 0.3s ease;
         }
 
@@ -167,14 +166,14 @@ export default function HeatmapChart({
           position: absolute;
           pointer-events: none;
           z-index: 50;
-          background: #1a1d2e;
-          border: 1px solid #2e3347;
-          border-radius: 8px;
+          background: #232323;
+          border: 1px solid rgba(255,255,255,0.09);
+          border-radius: 7px;
           padding: 10px 12px;
           min-width: 160px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
           font-size: 11px;
-          line-height: 1.6;
+          line-height: 1.7;
         }
       `}</style>
 
@@ -193,10 +192,10 @@ export default function HeatmapChart({
           <div key={s} style={{
             padding: '8px 0',
             textAlign: 'center',
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: 700,
             color: STRATEGY_COLOR[s],
-            letterSpacing: 1,
+            letterSpacing: 1.5,
             textTransform: 'uppercase',
           }}>
             {STRATEGY_LABEL[s]}
@@ -210,10 +209,11 @@ export default function HeatmapChart({
               display: 'flex',
               alignItems: 'center',
               fontSize: 11,
-              color: '#6b7280',
-              fontWeight: 500,
+              color: '#888',
+              fontWeight: 400,
               paddingRight: 12,
-              letterSpacing: 0.5,
+              letterSpacing: 0.3,
+              fontFamily: "'Satoshi', system-ui, sans-serif",
             }}>
               {CAT_LABELS[cat]}
             </div>
@@ -244,15 +244,15 @@ export default function HeatmapChart({
                       {cell ? `${(asr * 100).toFixed(0)}%` : '—'}
                     </span>
                     {cell && (
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>
-                        {cell.attack_count} attacks
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+                        {cell.attack_count}
                       </span>
                     )}
                     {delta !== null && Math.abs(delta) > 0.01 && (
                       <span style={{
                         fontSize: 9,
-                        color: delta > 0 ? '#ef4444' : '#10b981',
-                        fontWeight: 600,
+                        color: delta > 0 ? '#B03020' : '#4A9060',
+                        fontWeight: 700,
                       }}>
                         {delta > 0 ? '▲' : '▼'}{(Math.abs(delta) * 100).toFixed(0)}%
                       </span>
@@ -277,26 +277,29 @@ export default function HeatmapChart({
           className="hm-tooltip"
           style={{ left: tooltip.x, top: tooltip.y }}
         >
-          <div style={{ fontWeight: 700, color: '#f1f3f9', marginBottom: 4, fontSize: 12 }}>
+          <div style={{
+            fontWeight: 700, color: '#E8E8E8', marginBottom: 4, fontSize: 12,
+            fontFamily: "'Satoshi', system-ui, sans-serif",
+          }}>
             {CAT_LABELS_FULL[tooltip.cell.category as HarmCategory]} × {tooltip.strategy}
           </div>
-          <div style={{ color: '#a5b4fc' }}>
-            ASR: <strong style={{ color: '#f1f3f9' }}>{(tooltip.cell.asr * 100).toFixed(1)}%</strong>
+          <div style={{ color: '#888' }}>
+            ASR: <strong style={{ color: '#D4D4D4' }}>{(tooltip.cell.asr * 100).toFixed(1)}%</strong>
           </div>
-          <div style={{ color: '#6b7280' }}>
-            Attacks: <strong style={{ color: '#9ca3af' }}>{tooltip.cell.attack_count}</strong>
+          <div style={{ color: '#666' }}>
+            Attacks: <strong style={{ color: '#888' }}>{tooltip.cell.attack_count}</strong>
           </div>
           {tooltip.cell.asr > 0 && (
-            <div style={{ color: '#6b7280' }}>
-              Hits: <strong style={{ color: '#9ca3af' }}>
+            <div style={{ color: '#666' }}>
+              Hits: <strong style={{ color: '#888' }}>
                 {Math.round(tooltip.cell.asr * tooltip.cell.attack_count)}
               </strong>
             </div>
           )}
           <div style={{
             marginTop: 6, paddingTop: 6,
-            borderTop: '1px solid #2e3347',
-            fontSize: 9, color: '#374151', letterSpacing: 0.5,
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            fontSize: 9, color: '#555', letterSpacing: 0.5,
           }}>
             CLICK TO DRILL DOWN
           </div>
@@ -311,23 +314,24 @@ export default function HeatmapChart({
         gap: 12,
         justifyContent: 'center',
       }}>
-        <span style={{ fontSize: 9, color: '#374151', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-          Attack Success Rate
+        <span style={{
+          fontSize: 9, color: '#555', letterSpacing: 1.5, textTransform: 'uppercase',
+          fontFamily: "'Space Mono', monospace",
+        }}>
+          ASR
         </span>
-        <div style={{ position: 'relative' }}>
+        <div>
           <div style={{
-            width: 180, height: 8, borderRadius: 4,
-            background: 'linear-gradient(90deg, #11141f 0%, #f59e0b 50%, #ef4444 100%)',
+            width: 160, height: 6, borderRadius: 3,
+            background: 'linear-gradient(90deg, #2A2A2A 0%, #B8640B 50%, #B03020 100%)',
           }} />
-          {/* Tick marks */}
           <div style={{
             display: 'flex', justifyContent: 'space-between',
-            marginTop: 4, fontSize: 9, color: '#4b5280',
+            marginTop: 4, fontSize: 9, color: '#555',
+            fontFamily: "'Space Mono', monospace",
           }}>
             <span>0%</span>
-            <span>25%</span>
             <span>50%</span>
-            <span>75%</span>
             <span>100%</span>
           </div>
         </div>

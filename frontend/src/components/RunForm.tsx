@@ -19,10 +19,10 @@ const ALL_CATEGORIES: { id: HarmCategory; label: string; icon: string }[] = [
   { id: 'bioweapons',     label: 'Bio',            icon: '⚗' },
 ]
 
-const STRATEGIES: { id: AttackStrategy; label: string; color: string; glow: string }[] = [
-  { id: 'easy',      label: 'Easy',     color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
-  { id: 'moderate',  label: 'Moderate', color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
-  { id: 'difficult', label: 'Difficult',color: '#ef4444', glow: 'rgba(239,68,68,0.25)'  },
+const STRATEGIES: { id: AttackStrategy; label: string; color: string; bg: string }[] = [
+  { id: 'easy',      label: 'Easy',      color: '#4A9060', bg: 'rgba(74,144,96,0.1)'  },
+  { id: 'moderate',  label: 'Moderate',  color: '#B8860B', bg: 'rgba(184,134,11,0.1)' },
+  { id: 'difficult', label: 'Difficult', color: '#B03020', bg: 'rgba(176,48,32,0.1)'  },
 ]
 
 const TARGET_MODELS = [
@@ -75,201 +75,143 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
   const canSubmit = targetModel.trim() && categories.size > 0 && strategies.size > 0 && !isLoading
 
   return (
-    <form onSubmit={handleSubmit} style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+    <form onSubmit={handleSubmit} style={{ fontFamily: "'Satoshi', system-ui, sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
-
         .crucible-form {
-          background: #0f1117;
-          border: 1px solid #1e2235;
-          border-radius: 12px;
+          background: #232323;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 8px;
           overflow: hidden;
-          position: relative;
-        }
-
-        .crucible-form::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(99,102,241,0.012) 2px,
-            rgba(99,102,241,0.012) 4px
-          );
-          pointer-events: none;
-          z-index: 0;
         }
 
         .form-header {
-          padding: 20px 28px 16px;
-          border-bottom: 1px solid #1e2235;
+          padding: 18px 24px 14px;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
           display: flex;
           align-items: center;
-          gap: 12px;
-          position: relative;
-          z-index: 1;
+          gap: 10px;
         }
 
         .form-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 18px;
-          font-weight: 800;
-          color: #f1f3f9;
-          letter-spacing: -0.5px;
+          font-family: 'Satoshi', system-ui, sans-serif;
+          font-size: 15px;
+          font-weight: 700;
+          color: #E8E8E8;
           margin: 0;
+          letter-spacing: -0.2px;
         }
 
         .status-dot {
-          width: 8px; height: 8px;
+          width: 7px; height: 7px;
           border-radius: 50%;
-          background: #10b981;
-          box-shadow: 0 0 8px #10b981;
-          animation: pulse 2s ease-in-out infinite;
+          background: #4A9060;
           flex-shrink: 0;
         }
 
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-
         .form-body {
-          padding: 24px 28px;
+          padding: 22px 24px;
           display: flex;
           flex-direction: column;
-          gap: 24px;
-          position: relative;
-          z-index: 1;
+          gap: 22px;
         }
 
         .field-group {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 9px;
         }
 
         .field-label {
           font-size: 10px;
           font-weight: 600;
-          letter-spacing: 2px;
-          color: #4b5280;
+          letter-spacing: 1.5px;
+          color: #888;
           text-transform: uppercase;
           display: flex;
           align-items: center;
           gap: 8px;
-        }
-
-        .field-label span {
-          display: inline-block;
-          width: 16px; height: 1px;
-          background: #2e3347;
-        }
-
-        .model-input-wrap {
-          position: relative;
-          display: flex;
-          gap: 8px;
+          font-family: 'Space Mono', monospace;
         }
 
         .model-input {
-          flex: 1;
-          background: #131620;
-          border: 1px solid #1e2235;
-          border-radius: 8px;
-          padding: 10px 14px;
-          font-family: inherit;
-          font-size: 13px;
-          color: #e2e4f0;
+          width: 100%;
+          background: #2A2A2A;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 6px;
+          padding: 9px 12px;
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          color: #D4D4D4;
           outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s;
+          transition: border-color 0.15s;
         }
 
         .model-input:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+          border-color: rgba(192,57,43,0.5);
         }
 
-        .model-input::placeholder { color: #3d4260; }
-
-        .model-datalist-btn {
-          background: #131620;
-          border: 1px solid #1e2235;
-          border-radius: 8px;
-          padding: 0 12px;
-          cursor: pointer;
-          color: #4b5280;
-          font-size: 11px;
-          transition: all 0.15s;
-          white-space: nowrap;
-        }
-
-        .model-datalist-btn:hover { border-color: #6366f1; color: #6366f1; }
+        .model-input::placeholder { color: #555; }
 
         .category-grid {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
-          gap: 6px;
+          gap: 5px;
         }
 
         .cat-pill {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 7px 8px;
-          border-radius: 7px;
-          border: 1px solid #1e2235;
-          background: #131620;
+          gap: 4px;
+          padding: 6px 7px;
+          border-radius: 6px;
+          border: 1px solid rgba(255,255,255,0.07);
+          background: #2A2A2A;
           cursor: pointer;
-          font-family: inherit;
-          font-size: 10.5px;
+          font-family: 'Satoshi', system-ui, sans-serif;
+          font-size: 10px;
           font-weight: 500;
-          color: #4b5280;
-          transition: all 0.15s;
+          color: #888;
+          transition: all 0.12s;
           user-select: none;
           white-space: nowrap;
           overflow: hidden;
         }
 
         .cat-pill:hover:not(.active) {
-          border-color: #2e3347;
-          color: #8890b0;
+          border-color: rgba(255,255,255,0.12);
+          color: #D4D4D4;
         }
 
         .cat-pill.active {
-          border-color: rgba(99,102,241,0.6);
-          background: rgba(99,102,241,0.1);
-          color: #a5b4fc;
-          box-shadow: 0 0 12px rgba(99,102,241,0.12);
+          border-color: rgba(192,57,43,0.4);
+          background: rgba(192,57,43,0.08);
+          color: #E8E8E8;
         }
 
         .cat-icon {
-          font-size: 11px;
+          font-size: 10px;
           flex-shrink: 0;
         }
 
         .select-all-link {
           font-size: 10px;
-          color: #4b5280;
+          color: #666;
           cursor: pointer;
-          letter-spacing: 0.5px;
           text-decoration: underline;
           text-underline-offset: 3px;
           background: none;
           border: none;
-          font-family: inherit;
+          font-family: 'Satoshi', system-ui, sans-serif;
           padding: 0;
           transition: color 0.1s;
-          align-self: flex-end;
         }
 
-        .select-all-link:hover { color: #6366f1; }
+        .select-all-link:hover { color: #D4D4D4; }
 
         .strategy-row {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
+          gap: 7px;
         }
 
         .strategy-pill {
@@ -277,22 +219,21 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           align-items: center;
           justify-content: center;
           gap: 6px;
-          padding: 10px 0;
-          border-radius: 8px;
-          border: 1px solid #1e2235;
-          background: #131620;
+          padding: 9px 0;
+          border-radius: 6px;
+          border: 1px solid rgba(255,255,255,0.07);
+          background: #2A2A2A;
           cursor: pointer;
-          font-family: inherit;
+          font-family: 'Satoshi', system-ui, sans-serif;
           font-size: 12px;
-          font-weight: 600;
-          color: #4b5280;
-          transition: all 0.2s;
+          font-weight: 500;
+          color: #888;
+          transition: all 0.15s;
           user-select: none;
-          letter-spacing: 0.5px;
         }
 
         .strategy-dot {
-          width: 7px; height: 7px;
+          width: 6px; height: 6px;
           border-radius: 50%;
           flex-shrink: 0;
         }
@@ -306,27 +247,36 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         .slider-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: baseline;
         }
 
         .slider-value {
           font-size: 22px;
           font-weight: 700;
-          color: #6366f1;
+          color: #E8E8E8;
           line-height: 1;
           font-variant-numeric: tabular-nums;
+          font-family: 'Space Mono', monospace;
         }
 
         .slider-sub {
           font-size: 10px;
-          color: #3d4260;
+          color: #666;
+        }
+
+        .range-thumb-track {
+          position: relative;
+          height: 20px;
+          display: flex;
+          align-items: center;
         }
 
         .range-track {
-          position: relative;
-          height: 4px;
-          background: #1e2235;
-          border-radius: 4px;
+          position: absolute;
+          left: 0; right: 0;
+          height: 3px;
+          background: rgba(255,255,255,0.08);
+          border-radius: 3px;
         }
 
         .range-fill {
@@ -334,8 +284,8 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           left: 0;
           top: 0;
           height: 100%;
-          border-radius: 4px;
-          background: linear-gradient(90deg, #4f46e5, #818cf8);
+          border-radius: 3px;
+          background: #C0392B;
           pointer-events: none;
           transition: width 0.1s;
         }
@@ -349,24 +299,17 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           height: calc(100% + 16px);
         }
 
-        .range-thumb-track {
-          position: relative;
-          height: 20px;
-          display: flex;
-          align-items: center;
-        }
-
         .seed-input {
-          background: #131620;
-          border: 1px solid #1e2235;
-          border-radius: 8px;
-          padding: 10px 14px;
-          font-family: inherit;
-          font-size: 13px;
-          color: #e2e4f0;
+          background: #2A2A2A;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 6px;
+          padding: 9px 12px;
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          color: #D4D4D4;
           outline: none;
           width: 100%;
-          transition: border-color 0.15s, box-shadow 0.15s;
+          transition: border-color 0.15s;
           -moz-appearance: textfield;
         }
 
@@ -374,80 +317,60 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         .seed-input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
         .seed-input:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+          border-color: rgba(192,57,43,0.5);
         }
 
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 20px;
+          gap: 18px;
         }
 
         .divider {
           height: 1px;
-          background: linear-gradient(90deg, transparent, #1e2235 20%, #1e2235 80%, transparent);
+          background: rgba(255,255,255,0.05);
         }
 
         .launch-btn {
           width: 100%;
-          padding: 14px;
-          border-radius: 9px;
+          padding: 13px;
+          border-radius: 7px;
           border: none;
           cursor: pointer;
-          font-family: 'Syne', sans-serif;
-          font-size: 15px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          position: relative;
-          overflow: hidden;
-          transition: all 0.2s;
+          font-family: 'Satoshi', system-ui, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          transition: all 0.15s;
         }
 
         .launch-btn:not(:disabled) {
-          background: linear-gradient(135deg, #4f46e5, #6366f1, #818cf8);
+          background: #C0392B;
           color: #fff;
-          box-shadow: 0 4px 20px rgba(99,102,241,0.35);
         }
 
         .launch-btn:not(:disabled):hover {
-          box-shadow: 0 6px 28px rgba(99,102,241,0.5);
-          transform: translateY(-1px);
+          background: #A93226;
         }
 
         .launch-btn:not(:disabled):active {
-          transform: translateY(0);
-          box-shadow: 0 2px 12px rgba(99,102,241,0.3);
+          background: #922B21;
         }
 
         .launch-btn:disabled {
-          background: #1e2235;
-          color: #3d4260;
+          background: rgba(255,255,255,0.05);
+          color: #555;
           cursor: not-allowed;
-        }
-
-        .launch-btn .shimmer {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
-          transform: translateX(-100%);
-          animation: shimmer 2.5s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
         }
 
         .spinner {
           display: inline-block;
-          width: 14px; height: 14px;
+          width: 12px; height: 12px;
           border: 2px solid rgba(255,255,255,0.3);
           border-top-color: #fff;
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
-          vertical-align: -3px;
+          vertical-align: -2px;
           margin-right: 8px;
         }
 
@@ -455,18 +378,21 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
 
         .validation-hint {
           font-size: 10px;
-          color: #3d4260;
-          letter-spacing: 0.5px;
+          color: #666;
           text-align: center;
-          margin-top: 4px;
+          margin-top: 6px;
+          font-family: 'Satoshi', system-ui, sans-serif;
         }
       `}</style>
 
       <div className="crucible-form">
         <div className="form-header">
           <div className="status-dot" />
-          <p className="form-title">Crucible — Attack Config</p>
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#2e3347', letterSpacing: 2 }}>
+          <p className="form-title">Attack Configuration</p>
+          <span style={{
+            marginLeft: 'auto', fontSize: 9, color: '#555', letterSpacing: 1.5,
+            fontFamily: "'Space Mono', monospace",
+          }}>
             v0.1.0
           </span>
         </div>
@@ -474,25 +400,20 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         <div className="form-body">
           {/* Target Model */}
           <div className="field-group">
-            <label className="field-label">
-              <span />
-              Target Model
-            </label>
-            <div className="model-input-wrap">
-              <input
-                className="model-input"
-                type="text"
-                value={targetModel}
-                onChange={e => setTargetModel(e.target.value)}
-                placeholder="e.g. gpt-4o, ollama/phi4-mini"
-                list="model-suggestions"
-                autoComplete="off"
-                required
-              />
-              <datalist id="model-suggestions">
-                {TARGET_MODELS.map(m => <option key={m} value={m} />)}
-              </datalist>
-            </div>
+            <label className="field-label">Target Model</label>
+            <input
+              className="model-input"
+              type="text"
+              value={targetModel}
+              onChange={e => setTargetModel(e.target.value)}
+              placeholder="e.g. gpt-4o, ollama/phi4-mini"
+              list="model-suggestions"
+              autoComplete="off"
+              required
+            />
+            <datalist id="model-suggestions">
+              {TARGET_MODELS.map(m => <option key={m} value={m} />)}
+            </datalist>
           </div>
 
           <div className="divider" />
@@ -501,10 +422,9 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           <div className="field-group">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <label className="field-label">
-                <span />
                 Harm Categories
-                <span style={{ color: '#2e3347', fontWeight: 400 }}>
-                  ({categories.size}/10)
+                <span style={{ color: '#555', fontWeight: 400, fontFamily: 'inherit' }}>
+                  {categories.size}/10
                 </span>
               </label>
               <button type="button" className="select-all-link" onClick={selectAllCategories}>
@@ -530,12 +450,9 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
 
           {/* Strategies */}
           <div className="field-group">
-            <label className="field-label">
-              <span />
-              Attack Strategies
-            </label>
+            <label className="field-label">Attack Strategies</label>
             <div className="strategy-row">
-              {STRATEGIES.map(({ id, label, color, glow }) => {
+              {STRATEGIES.map(({ id, label, color, bg }) => {
                 const active = strategies.has(id)
                 return (
                   <button
@@ -544,15 +461,14 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
                     className="strategy-pill"
                     onClick={() => toggleStrategy(id)}
                     style={active ? {
-                      borderColor: color,
+                      borderColor: color + '80',
                       color,
-                      background: glow,
-                      boxShadow: `0 0 14px ${glow}`,
+                      background: bg,
                     } : {}}
                   >
                     <span
                       className="strategy-dot"
-                      style={{ background: active ? color : '#2e3347' }}
+                      style={{ background: active ? color : '#444' }}
                     />
                     {label}
                   </button>
@@ -566,14 +482,11 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           <div className="form-row">
             {/* Num Objectives */}
             <div className="field-group">
-              <label className="field-label">
-                <span />
-                Objectives
-              </label>
+              <label className="field-label">Objectives</label>
               <div className="slider-wrap">
                 <div className="slider-header">
                   <span className="slider-value">{numObjectives}</span>
-                  <span className="slider-sub">attacks / category</span>
+                  <span className="slider-sub">per category</span>
                 </div>
                 <div className="range-thumb-track">
                   <div className="range-track">
@@ -591,7 +504,11 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
                     onChange={e => setNumObjectives(Number(e.target.value))}
                   />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#2e3347' }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  fontSize: 9, color: '#555',
+                  fontFamily: "'Space Mono', monospace",
+                }}>
                   <span>1</span><span>20</span>
                 </div>
               </div>
@@ -599,10 +516,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
 
             {/* Seed */}
             <div className="field-group">
-              <label className="field-label">
-                <span />
-                Random Seed
-              </label>
+              <label className="field-label">Random Seed</label>
               <input
                 type="number"
                 className="seed-input"
@@ -611,9 +525,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
                 min={0}
                 max={999999}
               />
-              <span style={{ fontSize: 10, color: '#2e3347', letterSpacing: 0.5 }}>
-                for reproducibility
-              </span>
+              <span style={{ fontSize: 10, color: '#666' }}>for reproducibility</span>
             </div>
           </div>
 
@@ -626,10 +538,9 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
               className="launch-btn"
               disabled={!canSubmit}
             >
-              {!isLoading && canSubmit && <span className="shimmer" />}
               {isLoading
                 ? <><span className="spinner" />Scanning…</>
-                : '⚡ Launch Scan'
+                : 'Launch Scan'
               }
             </button>
             {!canSubmit && !isLoading && (
