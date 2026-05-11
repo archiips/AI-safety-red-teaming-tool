@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// In dev, seed localStorage with a valid JWT so every request is authenticated.
-// In production, the user logs in and the token is set by the auth flow.
-if (!localStorage.getItem('crucible_token') && import.meta.env.VITE_DEV_TOKEN) {
+// In dev, always use VITE_DEV_TOKEN so stale/invalid localStorage values don't block auth.
+// In production VITE_DEV_TOKEN is not set so this is a no-op.
+if (import.meta.env.VITE_DEV_TOKEN) {
   localStorage.setItem('crucible_token', import.meta.env.VITE_DEV_TOKEN)
 }
 

@@ -3,6 +3,10 @@ Celery application configuration for Crucible.
 Import the C++ module at module level (PRD Pitfall #8) so workers have it ready.
 """
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from celery import Celery
 
