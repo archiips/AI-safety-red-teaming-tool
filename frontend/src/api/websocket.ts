@@ -12,7 +12,7 @@ export function useRunStream(runId: string | null, onMessage: MessageHandler) {
 
   const connect = useCallback(() => {
     if (!runId) return
-    const token = localStorage.getItem('crucible_token') ?? 'dev-token'
+    const token = localStorage.getItem('crucible_token') ?? import.meta.env.VITE_DEV_TOKEN ?? ''
     const url = `${WS_BASE}/runs/${runId}/stream?token=${token}`
     const ws = new WebSocket(url)
     wsRef.current = ws

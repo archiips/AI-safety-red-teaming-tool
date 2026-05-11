@@ -8,12 +8,18 @@ const apiHost = process.env.VITE_API_HOST ?? 'http://localhost:8000'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   server: {
     host: true,
     proxy: {
-      '/runs': apiHost,
+      '/runs': {
+        target: apiHost,
+        ws: true,  // upgrade WebSocket on /runs/{id}/stream too
+      },
       '/policies': apiHost,
-      '/ws': { target: apiHost.replace('http', 'ws'), ws: true },
+      '/health': apiHost,
     },
   },
 })

@@ -210,18 +210,20 @@ export default function DrillDownPanel({ cell, onClose }: DrillDownPanelProps) {
 
   if (!cell) return null
 
-  const filtered = cell.attacks.filter((a: Attack) => {
+  const attacks = cell.attacks ?? []
+
+  const filtered = attacks.filter((a: Attack) => {
     if (filter === 'high') return a.score.composite >= 4
     if (filter === 'disagree') return Math.abs(a.score.cpp_score - a.score.llm_judge_score) > 2
     return true
   })
 
-  const highCount = cell.attacks.filter((a: Attack) => a.score.composite >= 4).length
-  const disagreeCount = cell.attacks.filter((a: Attack) => Math.abs(a.score.cpp_score - a.score.llm_judge_score) > 2).length
+  const highCount = attacks.filter((a: Attack) => a.score.composite >= 4).length
+  const disagreeCount = attacks.filter((a: Attack) => Math.abs(a.score.cpp_score - a.score.llm_judge_score) > 2).length
   const asrColor = cell.asr <= 0.2 ? '#3D8B5E' : cell.asr <= 0.5 ? '#A07820' : '#A83020'
 
   const filters: { id: 'all' | 'high' | 'disagree'; label: string; count: number }[] = [
-    { id: 'all', label: 'All', count: cell.attacks.length },
+    { id: 'all', label: 'All', count: attacks.length },
     { id: 'high', label: 'High-Risk', count: highCount },
     { id: 'disagree', label: 'Disagree', count: disagreeCount },
   ]
