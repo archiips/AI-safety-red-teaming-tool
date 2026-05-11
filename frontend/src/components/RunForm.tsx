@@ -306,7 +306,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         background: '#212121',
         border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 10,
-        overflow: 'hidden',
+        overflow: 'clip',
       }}>
         {/* Header */}
         <div style={{
@@ -323,7 +323,7 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           </span>
         </div>
 
-        <div style={{ padding: '22px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div style={{ padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
           {/* Target Model */}
           <div>
