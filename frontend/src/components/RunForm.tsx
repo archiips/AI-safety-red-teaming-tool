@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { RunConfig, HarmCategory, AttackStrategy } from '../types'
 
 interface RunFormProps {
@@ -6,23 +7,23 @@ interface RunFormProps {
   isLoading: boolean
 }
 
-const ALL_CATEGORIES: { id: HarmCategory; label: string; icon: string }[] = [
-  { id: 'violence',       label: 'Violence',       icon: '⚔' },
-  { id: 'hate',           label: 'Hate',           icon: '☣' },
-  { id: 'sexual',         label: 'Sexual',         icon: '⛔' },
-  { id: 'self_harm',      label: 'Self-Harm',      icon: '⚠' },
-  { id: 'deception',      label: 'Deception',      icon: '◈' },
-  { id: 'manipulation',   label: 'Manipulation',   icon: '⥁' },
-  { id: 'radicalization', label: 'Radical.',        icon: '◉' },
-  { id: 'privacy',        label: 'Privacy',        icon: '⊘' },
-  { id: 'cyberweapons',   label: 'Cyber',          icon: '⌘' },
-  { id: 'bioweapons',     label: 'Bio',            icon: '⚗' },
+const ALL_CATEGORIES: { id: HarmCategory; label: string }[] = [
+  { id: 'violence',       label: 'Violence'    },
+  { id: 'hate',           label: 'Hate'        },
+  { id: 'sexual',         label: 'Sexual'      },
+  { id: 'self_harm',      label: 'Self-Harm'   },
+  { id: 'deception',      label: 'Deception'   },
+  { id: 'manipulation',   label: 'Manipulation'},
+  { id: 'radicalization', label: 'Radical.'    },
+  { id: 'privacy',        label: 'Privacy'     },
+  { id: 'cyberweapons',   label: 'Cyber'       },
+  { id: 'bioweapons',     label: 'Bio'         },
 ]
 
-const STRATEGIES: { id: AttackStrategy; label: string; color: string; bg: string }[] = [
-  { id: 'easy',      label: 'Easy',      color: '#4A9060', bg: 'rgba(74,144,96,0.1)'  },
-  { id: 'moderate',  label: 'Moderate',  color: '#B8860B', bg: 'rgba(184,134,11,0.1)' },
-  { id: 'difficult', label: 'Difficult', color: '#B03020', bg: 'rgba(176,48,32,0.1)'  },
+const STRATEGIES: { id: AttackStrategy; label: string; desc: string; color: string; bg: string }[] = [
+  { id: 'easy',      label: 'Easy',      desc: 'Direct prompts',     color: '#3D8B5E', bg: 'rgba(61,139,94,0.09)'  },
+  { id: 'moderate',  label: 'Moderate',  desc: 'Roleplay & framing', color: '#A07820', bg: 'rgba(160,120,32,0.09)' },
+  { id: 'difficult', label: 'Difficult', desc: 'Jailbreaks & DAN',   color: '#A83020', bg: 'rgba(168,48,32,0.09)'  },
 ]
 
 const TARGET_MODELS = [
@@ -32,6 +33,32 @@ const TARGET_MODELS = [
   'claude-3-5-sonnet',
   'azure/phi-4-mini-instruct',
 ]
+
+function SectionLabel({ children, count }: { children: React.ReactNode; count?: string }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      marginBottom: 10,
+    }}>
+      <span style={{
+        fontSize: 10, fontWeight: 600, letterSpacing: 1.4, textTransform: 'uppercase',
+        color: '#666', fontFamily: "'Space Mono', monospace",
+        display: 'flex', alignItems: 'center', gap: 7,
+      }}>
+        <span style={{
+          display: 'inline-block', width: 3, height: 11, borderRadius: 2,
+          background: 'rgba(192,57,43,0.5)', flexShrink: 0,
+        }} />
+        {children}
+      </span>
+      {count && (
+        <span style={{
+          fontSize: 9, color: '#555', fontFamily: "'Space Mono', monospace",
+        }}>{count}</span>
+      )}
+    </div>
+  )
+}
 
 export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
   const [targetModel, setTargetModel] = useState('')
@@ -56,10 +83,6 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
     })
   }
 
-  function selectAllCategories() {
-    setCategories(new Set(ALL_CATEGORIES.map(c => c.id)))
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!targetModel.trim() || categories.size === 0 || strategies.size === 0) return
@@ -72,244 +95,117 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
     })
   }
 
-  const canSubmit = targetModel.trim() && categories.size > 0 && strategies.size > 0 && !isLoading
+  const canSubmit = !!(targetModel.trim() && categories.size > 0 && strategies.size > 0 && !isLoading)
 
   return (
-    <form onSubmit={handleSubmit} style={{ fontFamily: "'Satoshi', system-ui, sans-serif" }}>
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      style={{ fontFamily: "'Satoshi', system-ui, sans-serif" }}
+    >
       <style>{`
-        .crucible-form {
-          background: #232323;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 8px;
-          overflow: hidden;
-        }
-
-        .form-header {
-          padding: 18px 24px 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .form-title {
-          font-family: 'Satoshi', system-ui, sans-serif;
-          font-size: 15px;
-          font-weight: 700;
-          color: #E8E8E8;
-          margin: 0;
-          letter-spacing: -0.2px;
-        }
-
-        .status-dot {
-          width: 7px; height: 7px;
-          border-radius: 50%;
-          background: #4A9060;
-          flex-shrink: 0;
-        }
-
-        .form-body {
-          padding: 22px 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 22px;
-        }
-
-        .field-group {
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-        }
-
-        .field-label {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 1.5px;
-          color: #888;
-          text-transform: uppercase;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-family: 'Space Mono', monospace;
-        }
-
-        .model-input {
-          width: 100%;
-          background: #2A2A2A;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 6px;
-          padding: 9px 12px;
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
-          color: #D4D4D4;
-          outline: none;
-          transition: border-color 0.15s;
-        }
-
-        .model-input:focus {
-          border-color: rgba(192,57,43,0.5);
-        }
-
-        .model-input::placeholder { color: #555; }
-
-        .category-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 5px;
-        }
-
         .cat-pill {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 6px 7px;
-          border-radius: 6px;
-          border: 1px solid rgba(255,255,255,0.07);
-          background: #2A2A2A;
+          padding: 7px 10px;
+          border-radius: 7px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: #282828;
           cursor: pointer;
           font-family: 'Satoshi', system-ui, sans-serif;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 500;
-          color: #888;
-          transition: all 0.12s;
+          color: #666;
+          transition: all 0.12s ease;
           user-select: none;
-          white-space: nowrap;
-          overflow: hidden;
+          text-align: left;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 4px;
         }
 
         .cat-pill:hover:not(.active) {
-          border-color: rgba(255,255,255,0.12);
-          color: #D4D4D4;
+          border-color: rgba(255,255,255,0.1);
+          color: #C8C8C8;
+          background: #2E2E2E;
         }
 
         .cat-pill.active {
-          border-color: rgba(192,57,43,0.4);
+          border-color: rgba(192,57,43,0.35);
           background: rgba(192,57,43,0.08);
-          color: #E8E8E8;
+          color: #D4D4D4;
         }
 
-        .cat-icon {
-          font-size: 10px;
+        .cat-check {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: #C0392B;
+          opacity: 0;
+          transform: scale(0);
+          transition: all 0.15s ease;
           flex-shrink: 0;
         }
 
-        .select-all-link {
-          font-size: 10px;
-          color: #666;
-          cursor: pointer;
-          text-decoration: underline;
-          text-underline-offset: 3px;
-          background: none;
-          border: none;
-          font-family: 'Satoshi', system-ui, sans-serif;
-          padding: 0;
-          transition: color 0.1s;
-        }
-
-        .select-all-link:hover { color: #D4D4D4; }
-
-        .strategy-row {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 7px;
+        .cat-pill.active .cat-check {
+          opacity: 1;
+          transform: scale(1);
         }
 
         .strategy-pill {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 9px 0;
-          border-radius: 6px;
-          border: 1px solid rgba(255,255,255,0.07);
-          background: #2A2A2A;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 11px 13px;
+          border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: #282828;
           cursor: pointer;
           font-family: 'Satoshi', system-ui, sans-serif;
-          font-size: 12px;
-          font-weight: 500;
-          color: #888;
-          transition: all 0.15s;
-          user-select: none;
-        }
-
-        .strategy-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .slider-wrap {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .slider-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-        }
-
-        .slider-value {
-          font-size: 22px;
-          font-weight: 700;
-          color: #E8E8E8;
-          line-height: 1;
-          font-variant-numeric: tabular-nums;
-          font-family: 'Space Mono', monospace;
-        }
-
-        .slider-sub {
-          font-size: 10px;
           color: #666;
+          transition: all 0.15s ease;
+          user-select: none;
+          text-align: left;
+          gap: 2px;
         }
 
-        .range-thumb-track {
-          position: relative;
-          height: 20px;
-          display: flex;
-          align-items: center;
+        .strategy-pill:hover:not(.active) {
+          border-color: rgba(255,255,255,0.1);
+          background: #2E2E2E;
         }
 
-        .range-track {
-          position: absolute;
-          left: 0; right: 0;
-          height: 3px;
-          background: rgba(255,255,255,0.08);
-          border-radius: 3px;
-        }
-
-        .range-fill {
-          position: absolute;
-          left: 0;
-          top: 0;
-          height: 100%;
-          border-radius: 3px;
-          background: #C0392B;
-          pointer-events: none;
-          transition: width 0.1s;
-        }
-
-        .range-input {
-          position: absolute;
-          inset: -8px 0;
+        .model-input {
           width: 100%;
-          opacity: 0;
-          cursor: pointer;
-          height: calc(100% + 16px);
+          background: #282828;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 7px;
+          padding: 10px 13px;
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          color: #C8C8C8;
+          outline: none;
+          transition: border-color 0.15s, background 0.15s;
         }
+
+        .model-input:focus {
+          border-color: rgba(192,57,43,0.4);
+          background: #2C2C2C;
+        }
+
+        .model-input::placeholder { color: #444; }
 
         .seed-input {
-          background: #2A2A2A;
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 6px;
-          padding: 9px 12px;
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
-          color: #D4D4D4;
-          outline: none;
           width: 100%;
-          transition: border-color 0.15s;
+          background: #282828;
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 7px;
+          padding: 10px 13px;
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          color: #C8C8C8;
+          outline: none;
+          transition: border-color 0.15s, background 0.15s;
           -moz-appearance: textfield;
         }
 
@@ -317,31 +213,55 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         .seed-input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
         .seed-input:focus {
-          border-color: rgba(192,57,43,0.5);
+          border-color: rgba(192,57,43,0.4);
+          background: #2C2C2C;
         }
 
-        .form-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
+        .range-input {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 3px;
+          background: transparent;
+          outline: none;
+          cursor: pointer;
         }
 
-        .divider {
-          height: 1px;
-          background: rgba(255,255,255,0.05);
+        .range-input::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 14px; height: 14px;
+          border-radius: 50%;
+          background: #C0392B;
+          cursor: pointer;
+          border: 2px solid #181818;
+          box-shadow: 0 0 0 1px rgba(192,57,43,0.4);
+          transition: transform 0.1s;
+        }
+
+        .range-input::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+        }
+
+        .range-input::-moz-range-thumb {
+          width: 14px; height: 14px;
+          border-radius: 50%;
+          background: #C0392B;
+          cursor: pointer;
+          border: 2px solid #181818;
         }
 
         .launch-btn {
           width: 100%;
           padding: 13px;
-          border-radius: 7px;
+          border-radius: 8px;
           border: none;
           cursor: pointer;
           font-family: 'Satoshi', system-ui, sans-serif;
           font-size: 14px;
           font-weight: 700;
-          letter-spacing: 0.5px;
-          transition: all 0.15s;
+          letter-spacing: 0.3px;
+          transition: background 0.15s, transform 0.1s;
+          position: relative;
         }
 
         .launch-btn:not(:disabled) {
@@ -354,62 +274,68 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
         }
 
         .launch-btn:not(:disabled):active {
+          transform: scale(0.99);
           background: #922B21;
         }
 
         .launch-btn:disabled {
-          background: rgba(255,255,255,0.05);
-          color: #555;
+          background: rgba(255,255,255,0.04);
+          color: #444;
           cursor: not-allowed;
         }
 
         .spinner {
           display: inline-block;
           width: 12px; height: 12px;
-          border: 2px solid rgba(255,255,255,0.3);
+          border: 1.5px solid rgba(255,255,255,0.25);
           border-top-color: #fff;
           border-radius: 50%;
-          animation: spin 0.7s linear infinite;
+          animation: spin 0.6s linear infinite;
           vertical-align: -2px;
           margin-right: 8px;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .validation-hint {
-          font-size: 10px;
-          color: #666;
-          text-align: center;
-          margin-top: 6px;
-          font-family: 'Satoshi', system-ui, sans-serif;
+        .divider {
+          height: 1px;
+          background: rgba(255,255,255,0.05);
+          margin: 2px 0;
         }
       `}</style>
 
-      <div className="crucible-form">
-        <div className="form-header">
-          <div className="status-dot" />
-          <p className="form-title">Attack Configuration</p>
-          <span style={{
-            marginLeft: 'auto', fontSize: 9, color: '#555', letterSpacing: 1.5,
-            fontFamily: "'Space Mono', monospace",
-          }}>
-            v0.1.0
+      <div style={{
+        background: '#212121',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 10,
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '16px 22px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', alignItems: 'center', gap: 9,
+        }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: '#3D8B5E', flexShrink: 0,
+          }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#E6E6E6' }}>
+            Attack Configuration
           </span>
         </div>
 
-        <div className="form-body">
+        <div style={{ padding: '22px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
           {/* Target Model */}
-          <div className="field-group">
-            <label className="field-label">Target Model</label>
+          <div>
+            <SectionLabel>Target Model</SectionLabel>
             <input
               className="model-input"
               type="text"
               value={targetModel}
               onChange={e => setTargetModel(e.target.value)}
-              placeholder="e.g. gpt-4o, ollama/phi4-mini"
+              placeholder="ollama/phi4-mini, gpt-4o, azure/…"
               list="model-suggestions"
               autoComplete="off"
-              required
             />
             <datalist id="model-suggestions">
               {TARGET_MODELS.map(m => <option key={m} value={m} />)}
@@ -419,58 +345,77 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
           <div className="divider" />
 
           {/* Categories */}
-          <div className="field-group">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label className="field-label">
-                Harm Categories
-                <span style={{ color: '#555', fontWeight: 400, fontFamily: 'inherit' }}>
-                  {categories.size}/10
-                </span>
-              </label>
-              <button type="button" className="select-all-link" onClick={selectAllCategories}>
-                select all
-              </button>
-            </div>
-            <div className="category-grid">
-              {ALL_CATEGORIES.map(({ id, label, icon }) => (
+          <div>
+            <SectionLabel count={`${categories.size} / 10`}>Harm Categories</SectionLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5, marginBottom: 8 }}>
+              {ALL_CATEGORIES.map(({ id, label }) => (
                 <button
                   key={id}
                   type="button"
                   className={`cat-pill${categories.has(id) ? ' active' : ''}`}
                   onClick={() => toggleCategory(id)}
                 >
-                  <span className="cat-icon">{icon}</span>
-                  {label}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                  <span className="cat-check" />
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setCategories(new Set(ALL_CATEGORIES.map(c => c.id)))}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                fontSize: 10, color: '#555', cursor: 'pointer',
+                textDecoration: 'underline', textUnderlineOffset: 3,
+                fontFamily: "'Satoshi', system-ui, sans-serif",
+                transition: 'color 0.1s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#C8C8C8')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#555')}
+            >
+              select all
+            </button>
           </div>
 
           <div className="divider" />
 
           {/* Strategies */}
-          <div className="field-group">
-            <label className="field-label">Attack Strategies</label>
-            <div className="strategy-row">
-              {STRATEGIES.map(({ id, label, color, bg }) => {
+          <div>
+            <SectionLabel>Attack Strategies</SectionLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7 }}>
+              {STRATEGIES.map(({ id, label, desc, color, bg }) => {
                 const active = strategies.has(id)
                 return (
                   <button
                     key={id}
                     type="button"
-                    className="strategy-pill"
+                    className={`strategy-pill${active ? ' active' : ''}`}
                     onClick={() => toggleStrategy(id)}
                     style={active ? {
-                      borderColor: color + '80',
-                      color,
+                      borderColor: color + '55',
                       background: bg,
+                      color,
                     } : {}}
                   >
-                    <span
-                      className="strategy-dot"
-                      style={{ background: active ? color : '#444' }}
-                    />
-                    {label}
+                    <span style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      fontSize: 12, fontWeight: 600,
+                      color: active ? color : '#888',
+                    }}>
+                      <span style={{
+                        width: 5, height: 5, borderRadius: '50%',
+                        background: active ? color : '#3A3A3A',
+                        flexShrink: 0, transition: 'background 0.15s',
+                      }} />
+                      {label}
+                    </span>
+                    <span style={{
+                      fontSize: 9.5, color: active ? color + 'AA' : '#444',
+                      fontFamily: "'Space Mono', monospace",
+                      transition: 'color 0.15s',
+                    }}>
+                      {desc}
+                    </span>
                   </button>
                 )
               })}
@@ -479,53 +424,66 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
 
           <div className="divider" />
 
-          <div className="form-row">
-            {/* Num Objectives */}
-            <div className="field-group">
-              <label className="field-label">Objectives</label>
-              <div className="slider-wrap">
-                <div className="slider-header">
-                  <span className="slider-value">{numObjectives}</span>
-                  <span className="slider-sub">per category</span>
-                </div>
-                <div className="range-thumb-track">
-                  <div className="range-track">
-                    <div
-                      className="range-fill"
-                      style={{ width: `${((numObjectives - 1) / 19) * 100}%` }}
-                    />
-                  </div>
-                  <input
-                    type="range"
-                    className="range-input"
-                    min={1}
-                    max={20}
-                    value={numObjectives}
-                    onChange={e => setNumObjectives(Number(e.target.value))}
-                  />
-                </div>
+          {/* Objectives + Seed */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+            <div>
+              <SectionLabel>Objectives</SectionLabel>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={numObjectives}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      fontSize: 28, fontWeight: 700, color: '#E6E6E6', lineHeight: 1,
+                      fontFamily: "'Space Mono', monospace",
+                    }}
+                  >
+                    {numObjectives}
+                  </motion.span>
+                </AnimatePresence>
+                <span style={{ fontSize: 10, color: '#555' }}>per category</span>
+              </div>
+              <div style={{ position: 'relative', marginBottom: 6 }}>
                 <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  fontSize: 9, color: '#555',
-                  fontFamily: "'Space Mono', monospace",
+                  height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.07)',
+                  position: 'relative', overflow: 'hidden',
                 }}>
-                  <span>1</span><span>20</span>
+                  <div style={{
+                    position: 'absolute', left: 0, top: 0, height: '100%',
+                    width: `${((numObjectives - 1) / 19) * 100}%`,
+                    background: '#C0392B', borderRadius: 3,
+                    transition: 'width 0.1s',
+                  }} />
                 </div>
+                <input
+                  type="range"
+                  className="range-input"
+                  min={1} max={20}
+                  value={numObjectives}
+                  onChange={e => setNumObjectives(Number(e.target.value))}
+                  style={{ position: 'absolute', inset: '-6px 0', marginTop: 0 }}
+                />
+              </div>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between',
+                fontSize: 9, color: '#444', fontFamily: "'Space Mono', monospace",
+              }}>
+                <span>1</span><span>20</span>
               </div>
             </div>
 
-            {/* Seed */}
-            <div className="field-group">
-              <label className="field-label">Random Seed</label>
+            <div>
+              <SectionLabel>Seed</SectionLabel>
               <input
                 type="number"
                 className="seed-input"
                 value={seed}
                 onChange={e => setSeed(Number(e.target.value))}
-                min={0}
-                max={999999}
+                min={0} max={999999}
               />
-              <span style={{ fontSize: 10, color: '#666' }}>for reproducibility</span>
+              <p style={{ margin: '6px 0 0', fontSize: 10, color: '#444' }}>reproducible runs</p>
             </div>
           </div>
 
@@ -533,28 +491,36 @@ export default function RunForm({ onSubmit, isLoading }: RunFormProps) {
 
           {/* Submit */}
           <div>
-            <button
-              type="submit"
-              className="launch-btn"
-              disabled={!canSubmit}
-            >
+            <button type="submit" className="launch-btn" disabled={!canSubmit}>
               {isLoading
                 ? <><span className="spinner" />Scanning…</>
                 : 'Launch Scan'
               }
             </button>
-            {!canSubmit && !isLoading && (
-              <p className="validation-hint">
-                {!targetModel.trim()
-                  ? 'enter a target model to continue'
-                  : categories.size === 0
-                  ? 'select at least one harm category'
-                  : 'select at least one attack strategy'}
-              </p>
-            )}
+
+            <AnimatePresence>
+              {!canSubmit && !isLoading && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{
+                    margin: '8px 0 0', fontSize: 10, color: '#555',
+                    textAlign: 'center', overflow: 'hidden',
+                  }}
+                >
+                  {!targetModel.trim()
+                    ? 'enter a target model to continue'
+                    : categories.size === 0
+                    ? 'select at least one harm category'
+                    : 'select at least one attack strategy'}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
+
         </div>
       </div>
-    </form>
+    </motion.form>
   )
 }

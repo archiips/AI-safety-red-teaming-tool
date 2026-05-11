@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { HeatmapCell, Attack } from '../types'
 
 interface DrillDownPanelProps {
@@ -6,175 +7,201 @@ interface DrillDownPanelProps {
   onClose: () => void
 }
 
+function severityColor(v: number) {
+  return v <= 2 ? '#3D8B5E' : v <= 4 ? '#A07820' : '#A83020'
+}
+
 function ScoreChip({ label, value }: { label: string; value: number }) {
-  const color = value <= 2 ? '#4A9060' : value <= 4 ? '#B8860B' : '#B03020'
+  const color = severityColor(value)
+  const pct = (value / 7) * 100
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: 4, background: '#2A2A2A', border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 6, padding: '8px 10px', minWidth: 64,
+      flex: 1,
+      background: '#282828',
+      border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 7, padding: '9px 10px',
     }}>
-      <span style={{
-        fontSize: 8, color: '#666', letterSpacing: 1, textTransform: 'uppercase',
-        fontFamily: "'Space Mono', monospace",
+      <div style={{
+        fontSize: 8, color: '#555', letterSpacing: 1, textTransform: 'uppercase',
+        fontFamily: "'Space Mono', monospace", marginBottom: 5,
       }}>
         {label}
-      </span>
-      <span style={{
-        fontSize: 20, fontWeight: 700, color,
+      </div>
+      <div style={{
+        fontSize: 22, fontWeight: 700, color,
         lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-        fontFamily: "'Space Mono', monospace",
+        fontFamily: "'Space Mono', monospace", marginBottom: 6,
       }}>
         {value.toFixed(1)}
-      </span>
-      <div style={{ width: '100%', height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
-        <div style={{
-          height: '100%', width: `${(value / 7) * 100}%`,
-          background: color, borderRadius: 2,
-        }} />
+      </div>
+      <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+        <motion.div
+          style={{ height: '100%', background: color, borderRadius: 2 }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        />
       </div>
     </div>
   )
 }
 
-function AttackCard({ attack }: { attack: Attack }) {
+function AttackCard({ attack, index }: { attack: Attack; index: number }) {
   const [open, setOpen] = useState(false)
   const disagreement = Math.abs(attack.score.cpp_score - attack.score.llm_judge_score) > 2
-
-  const compositeColor = attack.score.composite <= 2 ? '#4A9060'
-    : attack.score.composite <= 4 ? '#B8860B' : '#B03020'
+  const color = severityColor(attack.score.composite)
 
   return (
-    <div style={{
-      border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 7,
-      overflow: 'hidden',
-      background: '#2A2A2A',
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, delay: index * 0.04 }}
+      style={{
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 8, overflow: 'hidden', background: '#282828',
+      }}
+    >
       <button
         onClick={() => setOpen(o => !o)}
         style={{
-          width: '100%', padding: '11px 13px',
+          width: '100%', padding: '11px 14px',
           display: 'flex', alignItems: 'center', gap: 10,
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: "'Satoshi', system-ui, sans-serif", textAlign: 'left',
+          transition: 'background 0.12s',
         }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
       >
         <div style={{
-          width: 3, flexShrink: 0, alignSelf: 'stretch',
-          borderRadius: 2, background: compositeColor,
+          width: 2, flexShrink: 0, alignSelf: 'stretch',
+          borderRadius: 2, background: color,
         }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
-            margin: 0, fontSize: 12, color: '#D4D4D4',
+            margin: 0, fontSize: 12, color: '#C8C8C8',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {attack.prompt}
           </p>
         </div>
-        {disagreement && (
-          <span title="Scorer disagreement" style={{ fontSize: 13, flexShrink: 0, color: '#B8860B' }}>⚠</span>
-        )}
-        <span style={{
-          fontSize: 14, fontWeight: 700, flexShrink: 0,
-          color: compositeColor,
-          fontVariantNumeric: 'tabular-nums',
-          minWidth: 28, textAlign: 'right',
-          fontFamily: "'Space Mono', monospace",
-        }}>
-          {attack.score.composite.toFixed(1)}
-        </span>
-        <span style={{ fontSize: 11, color: '#555', flexShrink: 0 }}>
-          {open ? '▲' : '▼'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {disagreement && (
+            <span title="Scorer disagreement" style={{ fontSize: 12, color: '#A07820' }}>⚠</span>
+          )}
+          <span style={{
+            fontSize: 14, fontWeight: 700, color,
+            fontVariantNumeric: 'tabular-nums',
+            fontFamily: "'Space Mono', monospace",
+            minWidth: 32, textAlign: 'right',
+          }}>
+            {attack.score.composite.toFixed(1)}
+          </span>
+          <span style={{ fontSize: 10, color: '#444' }}>{open ? '▲' : '▼'}</span>
+        </div>
       </button>
 
-      {open && (
-        <div style={{
-          padding: '0 13px 13px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 10 }}>
-            {[
-              { label: 'Prompt', text: attack.prompt },
-              { label: 'Response', text: attack.response || '(no response)' },
-            ].map(({ label, text }) => (
-              <div key={label}>
-                <p style={{
-                  fontSize: 9, color: '#666', letterSpacing: 1,
-                  textTransform: 'uppercase', margin: '0 0 5px',
-                  fontFamily: "'Space Mono', monospace",
-                }}>
-                  {label}
-                </p>
-                <p style={{
-                  fontSize: 11, color: '#999', background: '#232323',
-                  border: '1px solid rgba(255,255,255,0.06)', borderRadius: 5,
-                  padding: '8px 10px', margin: 0, lineHeight: 1.6,
-                  maxHeight: 110, overflow: 'auto',
-                  scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent',
-                  fontFamily: "'Space Mono', monospace",
-                }}>
-                  {text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-            <ScoreChip label="C++ Engine" value={attack.score.cpp_score} />
-            <ScoreChip label="Azure CS" value={attack.score.azure_cs_score} />
-            <ScoreChip label="LLM Judge" value={attack.score.llm_judge_score} />
-            <ScoreChip label="Composite" value={attack.score.composite} />
-          </div>
-
-          {disagreement && (
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: 'hidden' }}
+          >
             <div style={{
-              background: 'rgba(184,134,11,0.06)',
-              border: '1px solid rgba(184,134,11,0.2)',
-              borderRadius: 5, padding: '7px 10px',
-              fontSize: 10, color: '#B8860B',
+              padding: '0 14px 14px',
+              borderTop: '1px solid rgba(255,255,255,0.05)',
+              display: 'flex', flexDirection: 'column', gap: 11,
             }}>
-              ⚠ Scorer disagreement — C++ Engine and LLM Judge differ by more than 2 severity points. Review manually.
-            </div>
-          )}
-
-          {attack.matched_rules.length > 0 && (
-            <div>
-              <p style={{
-                fontSize: 9, color: '#666', letterSpacing: 1,
-                textTransform: 'uppercase', margin: '0 0 5px',
-                fontFamily: "'Space Mono', monospace",
-              }}>
-                Matched Rules
-              </p>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {attack.matched_rules.map(r => (
-                  <span key={r} style={{
-                    fontSize: 9, fontFamily: "'Space Mono', monospace",
-                    color: '#C0392B', background: 'rgba(192,57,43,0.08)',
-                    border: '1px solid rgba(192,57,43,0.25)',
-                    borderRadius: 4, padding: '2px 6px',
-                  }}>
-                    {r}
-                  </span>
+              {/* Prompt / Response */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, paddingTop: 11 }}>
+                {[
+                  { label: 'Prompt', text: attack.prompt },
+                  { label: 'Response', text: attack.response || '(no response)' },
+                ].map(({ label, text }) => (
+                  <div key={label}>
+                    <p style={{
+                      fontSize: 8.5, color: '#555', letterSpacing: 1, textTransform: 'uppercase',
+                      margin: '0 0 5px', fontFamily: "'Space Mono', monospace",
+                    }}>
+                      {label}
+                    </p>
+                    <p style={{
+                      fontSize: 11, color: '#888', background: '#212121',
+                      border: '1px solid rgba(255,255,255,0.05)', borderRadius: 5,
+                      padding: '8px 10px', margin: 0, lineHeight: 1.65,
+                      maxHeight: 108, overflow: 'auto',
+                      fontFamily: "'Space Mono', monospace",
+                    }}>
+                      {text}
+                    </p>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
 
-          <div style={{
-            display: 'flex', gap: 14, fontSize: 10, color: '#666',
-            fontFamily: "'Space Mono', monospace",
-          }}>
-            <span>κ(cpp,azure): <strong style={{ color: '#999' }}>{attack.score.kappa_cpp_azure.toFixed(2)}</strong></span>
-            <span>κ(cpp,judge): <strong style={{ color: '#999' }}>{attack.score.kappa_cpp_judge.toFixed(2)}</strong></span>
-            <span>κ(azure,judge): <strong style={{ color: '#999' }}>{attack.score.kappa_azure_judge.toFixed(2)}</strong></span>
-          </div>
-        </div>
-      )}
-    </div>
+              {/* Score chips */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <ScoreChip label="C++" value={attack.score.cpp_score} />
+                <ScoreChip label="Azure CS" value={attack.score.azure_cs_score} />
+                <ScoreChip label="LLM Judge" value={attack.score.llm_judge_score} />
+                <ScoreChip label="Composite" value={attack.score.composite} />
+              </div>
+
+              {/* Disagreement */}
+              {disagreement && (
+                <div style={{
+                  background: 'rgba(160,120,32,0.06)',
+                  border: '1px solid rgba(160,120,32,0.2)',
+                  borderRadius: 6, padding: '7px 10px',
+                  fontSize: 10, color: '#A07820',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                }}>
+                  <span>⚠</span>
+                  <span>Scorer disagreement — C++ and LLM Judge differ by &gt;2 severity points.</span>
+                </div>
+              )}
+
+              {/* Matched rules */}
+              {attack.matched_rules.length > 0 && (
+                <div>
+                  <p style={{
+                    fontSize: 8.5, color: '#555', letterSpacing: 1, textTransform: 'uppercase',
+                    margin: '0 0 5px', fontFamily: "'Space Mono', monospace",
+                  }}>
+                    Matched Rules
+                  </p>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {attack.matched_rules.map(r => (
+                      <span key={r} style={{
+                        fontSize: 9, fontFamily: "'Space Mono', monospace",
+                        color: '#C0392B', background: 'rgba(192,57,43,0.08)',
+                        border: '1px solid rgba(192,57,43,0.2)',
+                        borderRadius: 4, padding: '2px 6px',
+                      }}>
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Kappa values */}
+              <div style={{
+                display: 'flex', gap: 14, fontSize: 9.5, color: '#555',
+                fontFamily: "'Space Mono', monospace",
+                paddingTop: 2,
+              }}>
+                <span>κ(cpp,az) <strong style={{ color: '#777' }}>{attack.score.kappa_cpp_azure.toFixed(2)}</strong></span>
+                <span>κ(cpp,j) <strong style={{ color: '#777' }}>{attack.score.kappa_cpp_judge.toFixed(2)}</strong></span>
+                <span>κ(az,j) <strong style={{ color: '#777' }}>{attack.score.kappa_azure_judge.toFixed(2)}</strong></span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
 
@@ -189,84 +216,71 @@ export default function DrillDownPanel({ cell, onClose }: DrillDownPanelProps) {
     return true
   })
 
-  const meanAsr = cell.asr
   const highCount = cell.attacks.filter((a: Attack) => a.score.composite >= 4).length
+  const disagreeCount = cell.attacks.filter((a: Attack) => Math.abs(a.score.cpp_score - a.score.llm_judge_score) > 2).length
+  const asrColor = cell.asr <= 0.2 ? '#3D8B5E' : cell.asr <= 0.5 ? '#A07820' : '#A83020'
+
+  const filters: { id: 'all' | 'high' | 'disagree'; label: string; count: number }[] = [
+    { id: 'all', label: 'All', count: cell.attacks.length },
+    { id: 'high', label: 'High-Risk', count: highCount },
+    { id: 'disagree', label: 'Disagree', count: disagreeCount },
+  ]
 
   return (
     <div style={{
-      width: 500,
-      background: '#232323',
+      width: 490,
+      background: '#212121',
       border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 8,
-      display: 'flex',
-      flexDirection: 'column',
+      borderRadius: 10,
+      display: 'flex', flexDirection: 'column',
       maxHeight: '80vh',
       fontFamily: "'Satoshi', system-ui, sans-serif",
       overflow: 'hidden',
     }}>
-      <style>{`
-        .filter-tab {
-          padding: 4px 12px;
-          border-radius: 5px;
-          border: 1px solid rgba(255,255,255,0.07);
-          background: none;
-          cursor: pointer;
-          font-family: 'Satoshi', system-ui, sans-serif;
-          font-size: 11px;
-          font-weight: 500;
-          color: #666;
-          transition: all 0.12s;
-        }
-
-        .filter-tab.active {
-          background: rgba(192,57,43,0.1);
-          border-color: rgba(192,57,43,0.3);
-          color: #E8E8E8;
-        }
-
-        .filter-tab:hover:not(.active) {
-          border-color: rgba(255,255,255,0.12);
-          color: #D4D4D4;
-        }
-      `}</style>
-
-      {/* Panel header */}
+      {/* Header */}
       <div style={{
-        padding: '14px 18px',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
+        padding: '15px 18px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', alignItems: 'flex-start', gap: 12,
       }}>
-        <div style={{ flex: 1 }}>
-          <p style={{
-            margin: '0 0 4px',
-            fontFamily: "'Satoshi', system-ui, sans-serif",
-            fontWeight: 700, fontSize: 14,
-            color: '#E8E8E8',
-          }}>
-            {cell.category.replace('_', ' ').toUpperCase()}
-            <span style={{ color: '#3A3A3A', fontWeight: 400 }}> × </span>
-            {cell.strategy}
+        {/* Left accent */}
+        <div style={{
+          width: 3, alignSelf: 'stretch', borderRadius: 2,
+          background: `rgba(${cell.asr > 0.5 ? '168,48,32' : cell.asr > 0.2 ? '160,120,32' : '61,139,94'},0.7)`,
+          flexShrink: 0,
+        }} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: '0 0 5px', fontWeight: 700, fontSize: 14, color: '#E6E6E6' }}>
+            {cell.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            <span style={{ color: '#3A3A3A', fontWeight: 300, margin: '0 6px' }}>×</span>
+            <span style={{ color: '#888', fontWeight: 500 }}>{cell.strategy}</span>
           </p>
           <div style={{
-            display: 'flex', gap: 14, fontSize: 11, color: '#666',
+            display: 'flex', gap: 12, fontSize: 11, color: '#555',
             fontFamily: "'Space Mono', monospace",
           }}>
-            <span>ASR <strong style={{ color: '#C0392B' }}>{(meanAsr * 100).toFixed(1)}%</strong></span>
+            <span>
+              ASR <strong style={{ color: asrColor }}>{(cell.asr * 100).toFixed(1)}%</strong>
+            </span>
+            <span style={{ color: '#333' }}>·</span>
             <span>{cell.attack_count} attacks</span>
+            <span style={{ color: '#333' }}>·</span>
             <span>{highCount} high-severity</span>
           </div>
         </div>
+
         <button
           onClick={onClose}
           style={{
             background: 'none', border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 5, width: 26, height: 26,
-            cursor: 'pointer', color: '#666', fontSize: 13,
+            borderRadius: 6, width: 26, height: 26,
+            cursor: 'pointer', color: '#555', fontSize: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.12s',
+            transition: 'all 0.12s', flexShrink: 0,
           }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#E6E6E6'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
         >
           ✕
         </button>
@@ -275,38 +289,51 @@ export default function DrillDownPanel({ cell, onClose }: DrillDownPanelProps) {
       {/* Filter tabs */}
       <div style={{
         padding: '9px 18px',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        display: 'flex', gap: 5,
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', gap: 4,
       }}>
-        {(['all', 'high', 'disagree'] as const).map(f => (
+        {filters.map(f => (
           <button
-            key={f}
-            className={`filter-tab${filter === f ? ' active' : ''}`}
-            onClick={() => setFilter(f)}
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            style={{
+              padding: '4px 11px',
+              borderRadius: 6,
+              border: `1px solid ${filter === f.id ? 'rgba(192,57,43,0.3)' : 'rgba(255,255,255,0.06)'}`,
+              background: filter === f.id ? 'rgba(192,57,43,0.09)' : 'none',
+              cursor: 'pointer',
+              fontFamily: "'Satoshi', system-ui, sans-serif",
+              fontSize: 11, fontWeight: 500,
+              color: filter === f.id ? '#D4D4D4' : '#555',
+              transition: 'all 0.12s',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
           >
-            {f === 'all' ? `All (${cell.attacks.length})`
-              : f === 'high' ? `High-Risk (${highCount})`
-              : `Disagree (${cell.attacks.filter((a: Attack) => Math.abs(a.score.cpp_score - a.score.llm_judge_score) > 2).length})`
-            }
+            {f.label}
+            <span style={{
+              fontSize: 9, color: filter === f.id ? '#888' : '#3A3A3A',
+              fontFamily: "'Space Mono', monospace",
+            }}>
+              {f.count}
+            </span>
           </button>
         ))}
       </div>
 
       {/* Attack list */}
       <div style={{
-        flex: 1, overflow: 'auto', padding: '10px 18px',
+        flex: 1, overflow: 'auto', padding: '11px 18px',
         display: 'flex', flexDirection: 'column', gap: 6,
-        scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent',
+        scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.07) transparent',
       }}>
         {filtered.length === 0 ? (
-          <p style={{
-            textAlign: 'center', color: '#555',
-            fontSize: 12, marginTop: 24,
-          }}>
+          <p style={{ textAlign: 'center', color: '#444', fontSize: 12, marginTop: 28 }}>
             No attacks match this filter
           </p>
         ) : (
-          filtered.map((a: Attack) => <AttackCard key={a.id} attack={a} />)
+          filtered.map((a: Attack, i: number) => (
+            <AttackCard key={a.id} attack={a} index={i} />
+          ))
         )}
       </div>
     </div>

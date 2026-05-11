@@ -1,33 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #1C1C1C;
-  --bg-surface: #232323;
+  --bg: #181818;
+  --bg-surface: #212121;
   --bg-elevated: #2A2A2A;
-  --border: rgba(255, 255, 255, 0.07);
-  --text: #D4D4D4;
-  --text-muted: #888;
+  --bg-input: #282828;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.11);
+  --text: #C8C8C8;
+  --text-muted: #777;
   --text-secondary: #999;
-  --text-heading: #E8E8E8;
+  --text-heading: #E6E6E6;
   --accent: #C0392B;
-  --accent-dim: rgba(192, 57, 43, 0.12);
-  --severity-low: #4A9060;
-  --severity-mid: #B8860B;
-  --severity-high: #B03020;
+  --accent-hover: #A93226;
+  --accent-dim: rgba(192, 57, 43, 0.1);
+  --severity-low: #3D8B5E;
+  --severity-mid: #A07820;
+  --severity-high: #A83020;
 
   font-family: 'Satoshi', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body { margin: 0; }
-
 * { box-sizing: border-box; }
 
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @theme {
-  --color-surface: #232323;
+  --color-surface: #212121;
   --color-elevated: #2A2A2A;
-  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.06);
   --color-accent: #C0392B;
 }
